@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+<defs>
+ <linearGradient id="gold" x1="90" y1="75" x2="425" y2="435" gradientUnits="userSpaceOnUse"><stop stop-color="#F3D895"/><stop offset=".52" stop-color="#D6AD57"/><stop offset="1" stop-color="#A8792E"/></linearGradient>
+ <filter id="glow" x="30" y="25" width="452" height="462" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="12"/></filter>
+</defs>
+<circle cx="256" cy="256" r="224" fill="#0B0B0A"/>
+<path d="M130 335h245c45 0 75-30 75-70 0-38-29-67-66-70-10-61-60-105-124-105-58 0-108 37-124 90-47 1-84 36-84 80 0 43 34 75 78 75Z" stroke="url(#gold)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" opacity=".25" filter="url(#glow)"/>
+<path d="M130 335h245c45 0 75-30 75-70 0-38-29-67-66-70-10-61-60-105-124-105-58 0-108 37-124 90-47 1-84 36-84 80 0 43 34 75 78 75Z" stroke="url(#gold)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M158 226h82l27 27h88v112H158V226Z" fill="#17140E" stroke="url(#gold)" stroke-width="16" stroke-linejoin="round"/>
+<path d="M256 315v-91m0 0-34 34m34-34 34 34" stroke="url(#gold)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M184 366h144" stroke="url(#gold)" stroke-width="10" stroke-linecap="round" opacity=".75"/>
+</svg>
