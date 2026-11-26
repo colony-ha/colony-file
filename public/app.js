@@ -9,7 +9,7 @@ const translations = {
     controlTitle:"Stay in control",controlText:"Manage your links and storage from one place.",clearPlans:"CLEAR, SIMPLE PLANS",plansTitle:"Room for what <em>matters.</em>",
     forever:"/ forever",perMonth:"/ month",freeDesc:"A simple place to start storing and sharing.",startFree:"Start free",popular:"POPULAR",proDesc:"More room for the files you rely on.",choosePro:"Choose PRO",
     ready:"READY WHEN YOU ARE",ctaTitle:"Make space for what matters.",ctaText:"Your COLONY FILE space is just getting started.",contactUs:"Contact us",
-    footer:"© 2026 COLONY FILE. All rights reserved.",footerNote:"CREATE • STORE • SHARE"
+    footer:"© 2026 COLONY FILE. All rights reserved.",footerNote:"CREATE • STORE • SHARE",myCloud:"MY CLOUD SPACE",myFiles:"My files",storageUsed:"Storage used",signOut:"Sign out",newFolder:"New folder",uploadFiles:"Upload files"
   },
   fr: {
     navFeatures:"Fonctionnalités",navPlans:"Offres",signIn:"Connexion",eyebrow:"VOTRE ESPACE CLOUD PERSONNEL",
@@ -21,7 +21,7 @@ const translations = {
     controlTitle:"Gardez le contrôle",controlText:"Gérez vos liens et votre stockage au même endroit.",clearPlans:"DES OFFRES SIMPLES",plansTitle:"De la place pour <em>l'essentiel.</em>",
     forever:"/ pour toujours",perMonth:"/ mois",freeDesc:"Un espace simple pour commencer à stocker et partager.",startFree:"Commencer gratuitement",popular:"POPULAIRE",proDesc:"Plus d'espace pour vos fichiers importants.",choosePro:"Choisir PRO",
     ready:"QUAND VOUS ÊTES PRÊT",ctaTitle:"Faites de la place pour l'essentiel.",ctaText:"Votre espace COLONY FILE ne fait que commencer.",contactUs:"Nous contacter",
-    footer:"© 2026 COLONY FILE. Tous droits réservés.",footerNote:"CRÉER • STOCKER • PARTAGER"
+    footer:"© 2026 COLONY FILE. Tous droits réservés.",footerNote:"CRÉER • STOCKER • PARTAGER",myCloud:"MON ESPACE CLOUD",myFiles:"Mes fichiers",storageUsed:"Stockage utilisé",signOut:"Déconnexion",newFolder:"Nouveau dossier",uploadFiles:"Importer des fichiers"
   },
   ar: {
     navFeatures:"المميزات",navPlans:"الاشتراكات",signIn:"تسجيل الدخول",eyebrow:"مساحتك السحابية الشخصية",
@@ -33,7 +33,7 @@ const translations = {
     controlTitle:"تحكم كامل",controlText:"أدر روابط المشاركة ومساحة التخزين من مكان واحد.",clearPlans:"اشتراكات واضحة وبسيطة",plansTitle:"مساحة أكبر لما <em>يهمك.</em>",
     forever:"/ مدى الحياة",perMonth:"/ شهرياً",freeDesc:"مساحة بسيطة لبدء التخزين والمشاركة.",startFree:"ابدأ مجاناً",popular:"الأكثر اختياراً",proDesc:"مساحة أكبر لملفاتك المهمة.",choosePro:"اختر PRO",
     ready:"نحن جاهزون عندما تكون جاهزاً",ctaTitle:"افسح مساحة لما يهمك.",ctaText:"مساحة COLONY FILE الخاصة بك في بداية الطريق.",contactUs:"اتصل بنا",
-    footer:"© 2026 COLONY FILE. جميع الحقوق محفوظة.",footerNote:"أنشئ • خزّن • شارك"
+    footer:"© 2026 COLONY FILE. جميع الحقوق محفوظة.",footerNote:"أنشئ • خزّن • شارك",myCloud:"مساحتي السحابية",myFiles:"ملفاتي",storageUsed:"المساحة المستعملة",signOut:"تسجيل الخروج",newFolder:"مجلد جديد",uploadFiles:"رفع الملفات"
   }
 };
 const authTranslations = {
