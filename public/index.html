@@ -9,7 +9,6 @@
   <link rel="icon" type="image/svg+xml" href="/colony-logo.png">
   <link rel="stylesheet" href="/styles.css">
   <script src="/app.js" defer></script>
-  <script src="/workspace.js" defer></script>
 </head>
 <body>
   <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
@@ -99,24 +98,6 @@
         </form>
         <p class="auth-message" id="admin-setup-message" role="status" aria-live="polite"></p>
       </div>
-    </section>
-    <section class="workspace-area" id="workspace-area" hidden>
-      <div class="workspace-head">
-        <div><div class="eyebrow" data-i18n="myCloud">MY CLOUD SPACE</div><h2 id="workspace-title">My files</h2><p id="workspace-email"></p></div>
-        <button class="button button-outline" id="logout-button" type="button" data-i18n="signOut">Sign out</button>
-      </div>
-      <div class="storage-card">
-        <div class="storage-top"><div><span data-i18n="storageUsed">Storage used</span><strong id="storage-numbers">0 B / 1 GB</strong></div><span id="plan-label" class="plan-pill">FREE</span></div>
-        <div class="storage-track"><span id="storage-progress"></span></div>
-        <small id="storage-remaining">1 GB available</small>
-      </div>
-      <div class="workspace-toolbar">
-        <form id="folder-create-form" class="folder-create"><input name="name" maxlength="120" required placeholder="New folder name" aria-label="New folder name"><button class="button button-outline" type="submit" data-i18n="newFolder">New folder</button></form>
-        <label class="button button-gold upload-button"><span data-i18n="uploadFiles">Upload files</span><input id="file-picker" type="file" multiple hidden></label>
-      </div>
-      <div class="workspace-message" id="workspace-message" role="status" aria-live="polite"></div>
-      <div class="workspace-breadcrumb"><button id="root-folder" type="button" data-i18n="myFiles">My files</button><span id="folder-current"></span></div>
-      <div class="workspace-grid" id="workspace-items"><p class="workspace-empty">Your files and folders will appear here.</p></div>
     </section>
     <section class="admin-area" id="admin-area" hidden>
       <div class="admin-head"><div><div class="eyebrow">COLONY FILE CONTROL CENTER</div><h2>Administrator dashboard</h2></div><button class="button button-outline" id="admin-refresh" type="button">Refresh requests</button></div>
