@@ -110,27 +110,27 @@
     <section class="auth-area" id="auth-area" hidden>
       <div class="auth-card">
         <button class="auth-close" type="button" id="auth-close" aria-label="Close">×</button>
-        <div class="eyebrow">COLONY FILE ACCOUNT</div>
+        <div class="eyebrow" data-auth-text="account">COLONY FILE ACCOUNT</div>
         <h2 id="auth-title">Sign in</h2>
         <form id="auth-form">
-          <label id="name-wrap" hidden>Display name<input name="displayName" maxlength="80" autocomplete="name"></label>
-          <label>Email address<input name="email" type="email" required autocomplete="email"></label>
-          <label>Password<input name="password" type="password" required minlength="10" maxlength="128" autocomplete="current-password"></label>
+          <label id="name-wrap" hidden><span data-auth-text="displayName">Display name</span><input name="displayName" maxlength="80" autocomplete="name"></label>
+          <label><span data-auth-text="email">Email address</span><input name="email" type="email" required autocomplete="email"></label>
+          <label><span data-auth-text="password">Password</span><input name="password" type="password" required minlength="10" maxlength="128" autocomplete="current-password"></label>
           <button class="button button-gold full" id="auth-submit" type="submit">Sign in</button>
         </form>
         <button class="auth-text-button" id="forgot-open" type="button" dir="ltr" lang="en">Forgot your password?</button>
-        <div class="auth-switch"><span id="auth-switch-label">New to COLONY FILE?</span> <button id="auth-switch" type="button">Create account</button></div>
+        <div class="auth-switch"><span id="auth-switch-label" data-auth-text="newHere">New to COLONY FILE?</span> <button id="auth-switch" type="button">Create account</button></div>
         <form id="reset-form" hidden>
-          <p>Submit a password reset request. The administrator will review it; no email will be sent.</p>
+          <p data-auth-text="resetInfo">Submit a password reset request. The administrator will review it; no email will be sent.</p>
           <label>Email address<input name="email" type="email" required autocomplete="email"></label>
-          <button class="button button-gold full" type="submit">Send request to administrator</button>
-          <button class="auth-text-button" id="reset-back" type="button">Back to sign in</button>
+          <button class="button button-gold full" type="submit" data-auth-text="sendReset">Send request to administrator</button>
+          <button class="auth-text-button" id="reset-back" type="button" data-auth-text="backSignIn">Back to sign in</button>
         </form>
         <form id="change-form" hidden>
-          <p>Your administrator issued a temporary password. Change it now to continue.</p>
-          <label>Temporary password<input name="currentPassword" type="password" required minlength="10" autocomplete="current-password"></label>
-          <label>New password<input name="newPassword" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
-          <button class="button button-gold full" type="submit">Change password</button>
+          <p data-auth-text="tempInfo">Your administrator issued a temporary password. Change it now to continue.</p>
+          <label><span data-auth-text="temporaryPassword">Temporary password</span><input name="currentPassword" type="password" required minlength="10" autocomplete="current-password"></label>
+          <label><span data-auth-text="newPassword">New password</span><input name="newPassword" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+          <button class="button button-gold full" type="submit" data-auth-text="changePassword">Change password</button>
         </form>
         <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
       </div>
