@@ -7,7 +7,7 @@ const cors = {
   "Access-Control-Allow-Origin": SITE_ORIGIN,
   "Access-Control-Allow-Credentials": "true",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, X-File-Name, X-File-Size, X-Folder-Id",
   "Vary": "Origin"
 };
 
