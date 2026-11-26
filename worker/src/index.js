@@ -191,6 +191,107 @@ export default {
         return reply({ ok: true, message: "If the account exists, the request has been sent to the administrator." });
       }
 
+      // Authenticated customer workspace: quota and file metadata are always read from D1.
+      if (url.pathname === "/workspace" && request.method === "GET") {
+        const user = await currentUser(request, env);
+        if (!user) return reply({ error: "Please sign in." }, 401);
+        const [folders, files] = await Promise.all([
+          env.DB.prepare("SELECT id,name,parent_id,created_at FROM folders WHERE user_id=? AND parent_id IS NULL ORDER BY name COLLATE NOCASE").bind(user.id).all(),
+          env.DB.prepare("SELECT id,original_name,mime_type,size_bytes,download_count,created_at,folder_id FROM files WHERE user_id=? AND folder_id IS NULL AND status='active' ORDER BY created_at DESC").bind(user.id).all()
+        ]);
+        return reply({ user, folders: folders.results, files: files.results });
+      }
+
+      if (url.pathname === "/folders" && request.method === "POST") {
+        const user = await currentUser(request, env);
+        if (!user) return reply({ error: "Please sign in." }, 401);
+        const body = await request.json();
+        const name = String(body.name || "").trim();
+        const parentId = body.parentId ? String(body.parentId) : null;
+        if (!name || name.length > 120 || /[\\/\\0]/.test(name)) return reply({ error: "Folder name must be 1–120 characters and cannot contain slashes." }, 400);
+        if (parentId) {
+          const parent = await env.DB.prepare("SELECT id FROM folders WHERE id=? AND user_id=?").bind(parentId, user.id).first();
+          if (!parent) return reply({ error: "Parent folder not found." }, 404);
+        }
+        const id = crypto.randomUUID();
+        try {
+          await env.DB.prepare("INSERT INTO folders (id,user_id,parent_id,name) VALUES (?,?,?,?)").bind(id,user.id,parentId,name).run();
+        } catch (error) {
+          if (String(error.message).includes("UNIQUE")) return reply({ error: "A folder with this name already exists here." }, 409);
+          throw error;
+        }
+        return reply({ ok: true, folder: { id, name, parent_id: parentId } }, 201);
+      }
+
+      if (url.pathname.startsWith("/folders/") && request.method === "GET") {
+        const user = await currentUser(request, env);
+        if (!user) return reply({ error: "Please sign in." }, 401);
+        const folderId = url.pathname.split("/")[2];
+        const folder = await env.DB.prepare("SELECT id,name,parent_id FROM folders WHERE id=? AND user_id=?").bind(folderId,user.id).first();
+        if (!folder) return reply({ error: "Folder not found." }, 404);
+        const [folders,files] = await Promise.all([
+          env.DB.prepare("SELECT id,name,parent_id,created_at FROM folders WHERE user_id=? AND parent_id=? ORDER BY name COLLATE NOCASE").bind(user.id,folderId).all(),
+          env.DB.prepare("SELECT id,original_name,mime_type,size_bytes,download_count,created_at,folder_id FROM files WHERE user_id=? AND folder_id=? AND status='active' ORDER BY created_at DESC").bind(user.id,folderId).all()
+        ]);
+        return reply({ folder, folders:folders.results, files:files.results });
+      }
+
+      if (url.pathname === "/files/upload" && request.method === "POST") {
+        const user = await currentUser(request, env);
+        if (!user) return reply({ error: "Please sign in." }, 401);
+        const name = decodeURIComponent(request.headers.get("X-File-Name") || "file");
+        const mime = request.headers.get("Content-Type") || "application/octet-stream";
+        const size = Number(request.headers.get("X-File-Size") || request.headers.get("Content-Length") || 0);
+        const folderId = request.headers.get("X-Folder-Id") || null;
+        if (!name || name.length > 255 || /[\\0]/.test(name)) return reply({ error: "Invalid file name." }, 400);
+        if (!Number.isSafeInteger(size) || size <= 0 || size > 5 * 1024 * 1024 * 1024) return reply({ error: "Invalid file size." }, 400);
+        if (!request.body) return reply({ error: "File content is missing." }, 400);
+        if (folderId) {
+          const folder = await env.DB.prepare("SELECT id FROM folders WHERE id=? AND user_id=?").bind(folderId,user.id).first();
+          if (!folder) return reply({ error: "Destination folder not found." }, 404);
+        }
+        const reserve = await env.DB.prepare("UPDATE users SET storage_used_bytes=storage_used_bytes+? WHERE id=? AND status='active' AND storage_used_bytes+?<=storage_limit_bytes").bind(size,user.id,size).run();
+        if (!reserve.meta?.changes) return reply({ error: "Storage limit exceeded. Upgrade your plan or free up space." }, 413);
+        const id = crypto.randomUUID();
+        const objectKey = user.id + "/" + id;
+        try {
+          await env.FILES.put(objectKey, request.body, { httpMetadata: { contentType: mime } });
+          await env.DB.prepare("INSERT INTO files (id,user_id,folder_id,object_key,original_name,mime_type,size_bytes) VALUES (?,?,?,?,?,?,?)")
+            .bind(id,user.id,folderId,objectKey,name,mime,size).run();
+        } catch (error) {
+          await env.FILES.delete(objectKey).catch(()=>{});
+          await env.DB.prepare("UPDATE users SET storage_used_bytes=MAX(0,storage_used_bytes-?) WHERE id=?").bind(size,user.id).run();
+          throw error;
+        }
+        return reply({ ok:true, file:{id,original_name:name,mime_type:mime,size_bytes:size,folder_id:folderId} },201);
+      }
+
+      if (url.pathname.startsWith("/files/") && url.pathname.endsWith("/download") && request.method === "GET") {
+        const user = await currentUser(request, env);
+        if (!user) return reply({ error: "Please sign in." }, 401);
+        const id = url.pathname.split("/")[2];
+        const file = await env.DB.prepare("SELECT object_key,original_name,mime_type FROM files WHERE id=? AND user_id=? AND status='active'").bind(id,user.id).first();
+        if (!file) return reply({ error: "File not found." }, 404);
+        const object = await env.FILES.get(file.object_key);
+        if (!object) return reply({ error: "Stored file is missing." }, 404);
+        const safeName = file.original_name.replace(/[\r\n"]/g,"_");
+        return new Response(object.body,{headers:{...cors,"Content-Type":file.mime_type,"Content-Disposition":'attachment; filename="' + safeName + '"',"Cache-Control":"private, no-store"}});
+      }
+
+      if (url.pathname.startsWith("/files/") && url.pathname.endsWith("/delete") && request.method === "POST") {
+        const user = await currentUser(request, env);
+        if (!user) return reply({ error: "Please sign in." }, 401);
+        const id = url.pathname.split("/")[2];
+        const file = await env.DB.prepare("SELECT object_key,size_bytes FROM files WHERE id=? AND user_id=?").bind(id,user.id).first();
+        if (!file) return reply({ error: "File not found." }, 404);
+        await env.FILES.delete(file.object_key);
+        await env.DB.batch([
+          env.DB.prepare("DELETE FROM files WHERE id=? AND user_id=?").bind(id,user.id),
+          env.DB.prepare("UPDATE users SET storage_used_bytes=MAX(0,storage_used_bytes-?) WHERE id=?").bind(file.size_bytes,user.id)
+        ]);
+        return reply({ ok:true });
+      }
+
       if (url.pathname.startsWith("/admin/password-reset-requests")) {
         const admin = await currentUser(request, env);
         if (!admin || admin.role !== "admin" || admin.email.toLowerCase() !== ADMIN_EMAIL || admin.must_change_password) return reply({ error: "Administrator access required. Complete any required password change first." }, 403);
