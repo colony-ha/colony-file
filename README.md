@@ -17,3 +17,7 @@ The first commit creates the initial landing page. Authentication, file uploads,
 
 - FREE: 1 GB
 - PRO: 5 GB — $5/month
+
+## Deployment check
+
+This harmless README update is used to verify that GitHub changes trigger Cloudflare Workers Builds automatically.
