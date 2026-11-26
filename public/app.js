@@ -71,7 +71,6 @@ function setLanguage(lang) {
   const dict = translations[lang] || translations.en;
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-  applyAuthLanguage(lang);
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const value = dict[el.dataset.i18n];
     if (value) el.innerHTML = value;
@@ -95,6 +94,7 @@ const authTitle = document.getElementById("auth-title");
 const authSubmit = document.getElementById("auth-submit");
 const nameWrap = document.getElementById("name-wrap");
 let authMode = "login";
+applyAuthLanguage(saved);
 function showAuth(mode) {
   authMode = mode;
   authArea.hidden = false;
