@@ -193,7 +193,7 @@ export default {
 
       if (url.pathname.startsWith("/admin/password-reset-requests")) {
         const admin = await currentUser(request, env);
-        if (!admin || admin.role !== "admin" || admin.email.toLowerCase() !== ADMIN_EMAIL) return reply({ error: "Administrator access required." }, 403);
+        if (!admin || admin.role !== "admin" || admin.email.toLowerCase() !== ADMIN_EMAIL || admin.must_change_password) return reply({ error: "Administrator access required. Complete any required password change first." }, 403);
         await ensureResetTable(env);
         if (request.method === "GET" && url.pathname === "/admin/password-reset-requests") {
           const { results } = await env.DB.prepare(`SELECT r.id,r.status,r.requested_at,u.email,u.display_name
