@@ -81,7 +81,7 @@ let saved = 'en';
 try { saved = localStorage.getItem('colony-file-language') || 'en'; } catch (_) {}
 language.value = saved;
 setLanguage(saved);
-language.addEventListener('change', event => setLanguage(event.target.value));
+language.addEventListener('change', event => { setLanguage(event.target.value); applyAuthLanguage(event.target.value); });
 
 
 const API = "https://colony-file-api.colonyus666.workers.dev";
