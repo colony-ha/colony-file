@@ -81,6 +81,7 @@ function showAuth(mode) {
 }
 document.querySelectorAll("[data-auth-open]").forEach(button => button.addEventListener("click", () => showAuth(button.dataset.authOpen)));
 document.getElementById("auth-close").addEventListener("click", () => { authArea.hidden = true; });
+document.getElementById("admin-area").hidden = true;
 document.getElementById("auth-switch").addEventListener("click", () => showAuth(authMode === "login" ? "register" : "login"));
 document.getElementById("forgot-open").addEventListener("click", () => {
   authForm.hidden = true; resetForm.hidden = false; changeForm.hidden = true;
@@ -107,7 +108,11 @@ authForm.addEventListener("submit", async event => {
     } else {
       authTitle.textContent = "Welcome to COLONY FILE";
       authForm.hidden = true;
-      authMessage.textContent = "Your account is ready. File workspace features are coming next.";
+      authMessage.textContent = data.user?.role === "admin" ? "Administrator signed in." : "Your account is ready. File workspace features are coming next.";
+      if (data.user?.role === "admin" && data.user?.email?.toLowerCase() === "hanih9823@gmail.com") {
+        document.getElementById("admin-area").hidden = false;
+        loadAdminRequests();
+      }
     }
   } catch(error) { authMessage.textContent = error.message; }
   finally { authSubmit.disabled = false; }
@@ -135,3 +140,44 @@ changeForm.addEventListener("submit", async event => {
   } catch(error) { authMessage.textContent = error.message; }
   finally { button.disabled = false; }
 });
+
+
+async function loadAdminRequests() {
+  const list = document.getElementById("admin-requests");
+  list.innerHTML = "<p>Loading requests…</p>";
+  try {
+    const response = await fetch(API + "/admin/password-reset-requests", {credentials:"include"});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not load requests.");
+    if (!data.requests?.length) { list.innerHTML = "<p>No requests yet.</p>"; return; }
+    list.replaceChildren();
+    data.requests.forEach(item => {
+      const card = document.createElement("article"); card.className = "admin-request";
+      const info = document.createElement("div");
+      const email = document.createElement("strong"); email.textContent = item.email;
+      const meta = document.createElement("small"); meta.textContent = (item.display_name || "User") + " · " + item.status + " · " + new Date(item.requested_at).toLocaleString();
+      info.append(email,meta); card.append(info);
+      if (item.status === "pending") {
+        const actions = document.createElement("div"); actions.className = "admin-request-actions";
+        const password = document.createElement("input"); password.type="password"; password.minLength=10; password.maxLength=128; password.placeholder="Temporary password (10+ chars)";
+        const approve = document.createElement("button"); approve.className="button button-gold"; approve.textContent="Approve";
+        approve.addEventListener("click", async () => {
+          if(password.value.length<10){ alert("Temporary password must be at least 10 characters."); return; }
+          approve.disabled=true;
+          try { await api("/admin/password-reset-requests/review",{requestId:item.id,action:"approve",temporaryPassword:password.value}); await loadAdminRequests(); }
+          catch(e){ alert(e.message); approve.disabled=false; }
+        });
+        const reject = document.createElement("button"); reject.className="button button-outline"; reject.textContent="Reject";
+        reject.addEventListener("click", async () => {
+          if(!confirm("Reject this password reset request?")) return;
+          reject.disabled=true;
+          try { await api("/admin/password-reset-requests/review",{requestId:item.id,action:"reject"}); await loadAdminRequests(); }
+          catch(e){ alert(e.message); reject.disabled=false; }
+        });
+        actions.append(password,approve,reject); card.append(actions);
+      }
+      list.append(card);
+    });
+  } catch(error) { list.textContent = error.message; }
+}
+document.getElementById("admin-refresh").addEventListener("click", loadAdminRequests);
