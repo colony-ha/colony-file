@@ -87,8 +87,36 @@
     </section>
 
     <section class="cta" id="signin">
-      <div><div class="eyebrow" data-i18n="ready">READY WHEN YOU ARE</div><h2 data-i18n="ctaTitle">Make space for what matters.</h2><p data-i18n="ctaText">Your COLONY FILE space is just getting started.</p></div>
-      <a href="mailto:support@colony-file.pages.dev" class="button button-gold"><span data-i18n="contactUs">Contact us</span><span aria-hidden="true">↗</span></a>
+      <div><div class="eyebrow" data-i18n="ready">READY WHEN YOU ARE</div><h2 data-i18n="ctaTitle">Make space for what matters.</h2><p data-i18n="ctaText">Create your account or sign in to your cloud space.</p></div>
+      <div class="hero-actions"><button class="button button-outline" type="button" data-auth-open="login">Sign in</button><button class="button button-gold" type="button" data-auth-open="register">Create account ↗</button></div>
+    </section>
+    <section class="auth-area" id="auth-area" hidden>
+      <div class="auth-card">
+        <button class="auth-close" type="button" id="auth-close" aria-label="Close">×</button>
+        <div class="eyebrow">COLONY FILE ACCOUNT</div>
+        <h2 id="auth-title">Sign in</h2>
+        <form id="auth-form">
+          <label id="name-wrap" hidden>Display name<input name="displayName" maxlength="80" autocomplete="name"></label>
+          <label>Email address<input name="email" type="email" required autocomplete="email"></label>
+          <label>Password<input name="password" type="password" required minlength="10" maxlength="128" autocomplete="current-password"></label>
+          <button class="button button-gold full" id="auth-submit" type="submit">Sign in</button>
+        </form>
+        <button class="auth-text-button" id="forgot-open" type="button">Forgot your password?</button>
+        <div class="auth-switch"><span id="auth-switch-label">New to COLONY FILE?</span> <button id="auth-switch" type="button">Create account</button></div>
+        <form id="reset-form" hidden>
+          <p>Submit a password reset request. The administrator will review it; no email will be sent.</p>
+          <label>Email address<input name="email" type="email" required autocomplete="email"></label>
+          <button class="button button-gold full" type="submit">Send request to administrator</button>
+          <button class="auth-text-button" id="reset-back" type="button">Back to sign in</button>
+        </form>
+        <form id="change-form" hidden>
+          <p>Your administrator issued a temporary password. Change it now to continue.</p>
+          <label>Temporary password<input name="currentPassword" type="password" required minlength="10" autocomplete="current-password"></label>
+          <label>New password<input name="newPassword" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+          <button class="button button-gold full" type="submit">Change password</button>
+        </form>
+        <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
+      </div>
     </section>
   </main>
 
