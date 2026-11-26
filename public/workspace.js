@@ -22,9 +22,7 @@
     area.hidden=false;
     $("workspace-email").textContent=user.email;
     $("workspace-title").textContent=user.display_name||t("myFiles");
-    document.getElementById("auth-area").hidden=true;
     document.body.style.overflow="";
-    area.scrollIntoView({behavior:"smooth",block:"start"});
   }
   async function load(id=null) {
     $("workspace-message").textContent=t("loading");
@@ -93,16 +91,12 @@
   $("logout-button").addEventListener("click",async()=>{
     try{await request("/auth/logout",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});}catch(_){}
     area.hidden=true;user=null;folderId=null;
-    document.querySelector('[data-auth-open="login"]')?.click();
+    window.location.assign("/");
   });
   document.getElementById("language").addEventListener("change",()=>{if(user){$("workspace-title").textContent=user.display_name||t("myFiles");$("workspace-email").textContent=user.email;}});
   async function restore(){
     try {const d=await request("/auth/me");if(!d.user)return;if(d.user.role==="admin")return;if(d.user.must_change_password)return;user=d.user;reveal();await load();}
     catch(_){}
   }
-  document.addEventListener("colony:authenticated",async e=>{
-    if(!e.detail||e.detail.role==="admin"||e.detail.must_change_password)return;
-    user=e.detail;reveal();await load();
-  });
   restore();
 })();
