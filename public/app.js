@@ -80,7 +80,10 @@ function showAuth(mode) {
   document.body.style.overflow = "hidden";
 }
 document.querySelectorAll("[data-auth-open]").forEach(button => button.addEventListener("click", event => { event.preventDefault(); showAuth(button.dataset.authOpen); }));
-document.getElementById("auth-close").addEventListener("click", () => { authArea.hidden = true; document.body.style.overflow = ""; });
+function closeAuth() { authArea.hidden = true; document.body.style.overflow = ""; }
+document.getElementById("auth-close").addEventListener("click", closeAuth);
+authArea.addEventListener("click", event => { if (event.target === authArea) closeAuth(); });
+document.addEventListener("keydown", event => { if (event.key === "Escape" && !authArea.hidden) closeAuth(); });
 document.getElementById("admin-area").hidden = true;
 document.getElementById("auth-switch").addEventListener("click", () => showAuth(authMode === "login" ? "register" : "login"));
 document.getElementById("forgot-open").addEventListener("click", () => {
