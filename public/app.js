@@ -36,11 +36,42 @@ const translations = {
     footer:"© 2026 COLONY FILE. جميع الحقوق محفوظة.",footerNote:"أنشئ • خزّن • شارك"
   }
 };
+const authTranslations = {
+  en: {account:"COLONY FILE ACCOUNT",signIn:"Sign in",createTitle:"Create your account",create:"Create account",displayName:"Display name",email:"Email address",password:"Password",forgot:"Forgot your password?",newHere:"New to COLONY FILE?",already:"Already have an account?",reset:"Reset password",resetInfo:"Submit a password reset request. The administrator will review it; no email will be sent.",sendReset:"Send request to administrator",backSignIn:"Back to sign in",tempInfo:"Your administrator issued a temporary password. Change it now to continue.",temporaryPassword:"Temporary password",newPassword:"New password",changePassword:"Change password",wait:"Please wait…",sending:"Sending request…",updating:"Updating password…",signed:"Signed in successfully.",welcome:"Welcome to COLONY FILE",adminSigned:"Administrator signed in.",accountReady:"Your account is ready. File workspace features are coming next.",requestSent:"Request submitted.",passwordUpdated:"Password updated. Please sign in again."},
+  fr: {account:"COMPTE COLONY FILE",signIn:"Connexion",createTitle:"Créer votre compte",create:"Créer un compte",displayName:"Nom affiché",email:"Adresse e-mail",password:"Mot de passe",forgot:"Mot de passe oublié ?",newHere:"Nouveau sur COLONY FILE ?",already:"Vous avez déjà un compte ?",reset:"Réinitialiser le mot de passe",resetInfo:"Envoyez une demande de réinitialisation. L’administrateur l’examinera ; aucun e-mail ne sera envoyé.",sendReset:"Envoyer la demande à l’administrateur",backSignIn:"Retour à la connexion",tempInfo:"L’administrateur vous a fourni un mot de passe temporaire. Changez-le pour continuer.",temporaryPassword:"Mot de passe temporaire",newPassword:"Nouveau mot de passe",changePassword:"Changer le mot de passe",wait:"Veuillez patienter…",sending:"Envoi de la demande…",updating:"Mise à jour du mot de passe…",signed:"Connexion réussie.",welcome:"Bienvenue sur COLONY FILE",adminSigned:"Connexion administrateur réussie.",accountReady:"Votre compte est prêt. L’espace fichiers sera bientôt disponible.",requestSent:"Demande envoyée.",passwordUpdated:"Mot de passe modifié. Veuillez vous reconnecter."},
+  ar: {account:"حساب COLONY FILE",signIn:"تسجيل الدخول",createTitle:"إنشاء حسابك",create:"إنشاء حساب",displayName:"الاسم الظاهر",email:"البريد الإلكتروني",password:"كلمة المرور",forgot:"نسيت كلمة المرور؟",newHere:"جديد في COLONY FILE؟",already:"لديك حساب بالفعل؟",reset:"استعادة كلمة المرور",resetInfo:"أرسل طلب تغيير كلمة المرور. سيراجعه المدير، ولن يتم إرسال أي بريد إلكتروني.",sendReset:"إرسال الطلب إلى المدير",backSignIn:"العودة إلى تسجيل الدخول",tempInfo:"منحك المدير كلمة مرور مؤقتة. غيّرها الآن للمتابعة.",temporaryPassword:"كلمة المرور المؤقتة",newPassword:"كلمة المرور الجديدة",changePassword:"تغيير كلمة المرور",wait:"يرجى الانتظار…",sending:"جارٍ إرسال الطلب…",updating:"جارٍ تحديث كلمة المرور…",signed:"تم تسجيل الدخول بنجاح.",welcome:"مرحباً بك في COLONY FILE",adminSigned:"تم دخول المدير بنجاح.",accountReady:"حسابك جاهز. مساحة الملفات ستكون متاحة قريباً.",requestSent:"تم إرسال الطلب.",passwordUpdated:"تم تغيير كلمة المرور. يرجى تسجيل الدخول مجدداً."}
+};
+let activeAuthLang = "en";
+function authText(key) { return (authTranslations[activeAuthLang] || authTranslations.en)[key] || authTranslations.en[key] || key; }
+function applyAuthLanguage(lang) {
+  activeAuthLang = lang;
+  const dict = authTranslations[lang] || authTranslations.en;
+  document.querySelectorAll("[data-auth-text]").forEach(el => { el.textContent = dict[el.dataset.authText] || authTranslations.en[el.dataset.authText] || ""; });
+  const forgot = document.getElementById("forgot-open");
+  if (forgot) { forgot.textContent = dict.forgot; forgot.dir = "auto"; forgot.lang = lang; }
+  const title = document.getElementById("auth-title");
+  if (title) {
+    if (authMode === "register") title.textContent = dict.createTitle;
+    else if (resetForm && !resetForm.hidden) title.textContent = dict.reset;
+    else if (changeForm && !changeForm.hidden) title.textContent = dict.changePassword;
+    else if (authForm && !authForm.hidden) title.textContent = dict.signIn;
+  }
+  const submit = document.getElementById("auth-submit");
+  if (submit) submit.textContent = authMode === "register" ? dict.create : dict.signIn;
+  const switchLabel = document.getElementById("auth-switch-label");
+  const switchButton = document.getElementById("auth-switch");
+  if (switchLabel) switchLabel.textContent = authMode === "login" ? dict.newHere : dict.already;
+  if (switchButton) switchButton.textContent = authMode === "login" ? dict.create : dict.signIn;
+  document.querySelectorAll("#auth-area input[name=email]").forEach(el => el.placeholder = dict.email);
+  const setup = document.getElementById("auth-area");
+  if (setup) setup.dir = lang === "ar" ? "rtl" : "ltr";
+}
 const language = document.getElementById('language');
 function setLanguage(lang) {
   const dict = translations[lang] || translations.en;
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  applyAuthLanguage(lang);
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const value = dict[el.dataset.i18n];
     if (value) el.innerHTML = value;
@@ -71,11 +102,11 @@ function showAuth(mode) {
   changeForm.hidden = true;
   authForm.hidden = false;
   nameWrap.hidden = mode !== "register";
-  authTitle.textContent = mode === "register" ? "Create your account" : "Sign in";
-  authSubmit.textContent = mode === "register" ? "Create account" : "Sign in";
+  authTitle.textContent = mode === "register" ? authText("createTitle") : authText("signIn");
+  authSubmit.textContent = mode === "register" ? authText("create") : authText("signIn");
   document.getElementById("forgot-open").hidden = mode !== "login";
-  document.getElementById("auth-switch-label").textContent = mode === "login" ? "New to COLONY FILE?" : "Already have an account?";
-  document.getElementById("auth-switch").textContent = mode === "login" ? "Create account" : "Sign in";
+  document.getElementById("auth-switch-label").textContent = mode === "login" ? authText("newHere") : authText("already");
+  document.getElementById("auth-switch").textContent = mode === "login" ? authText("create") : authText("signIn");
   authMessage.textContent = "";
   document.body.style.overflow = "hidden";
 }
@@ -88,7 +119,7 @@ document.getElementById("admin-area").hidden = true;
 document.getElementById("auth-switch").addEventListener("click", () => showAuth(authMode === "login" ? "register" : "login"));
 document.getElementById("forgot-open").addEventListener("click", () => {
   authForm.hidden = true; resetForm.hidden = false; changeForm.hidden = true;
-  authTitle.textContent = "Reset password"; authMessage.textContent = "";
+  authTitle.textContent = authText("reset"); authMessage.textContent = "";
 });
 document.getElementById("reset-back").addEventListener("click", () => showAuth("login"));
 async function api(path, body) {
@@ -100,18 +131,18 @@ async function api(path, body) {
 authForm.addEventListener("submit", async event => {
   event.preventDefault();
   const form = new FormData(authForm);
-  authSubmit.disabled = true; authMessage.textContent = "Please wait…";
+  authSubmit.disabled = true; authMessage.textContent = authText("wait");
   try {
     const path = authMode === "register" ? "/auth/register" : "/auth/login";
     const data = await api(path, {email:form.get("email"),password:form.get("password"),displayName:form.get("displayName")});
-    authMessage.textContent = "Signed in successfully.";
+    authMessage.textContent = authText("signed");
     if (data.user?.must_change_password) {
       authForm.hidden = true; resetForm.hidden = true; changeForm.hidden = false;
-      authTitle.textContent = "Change your password";
+      authTitle.textContent = authText("changePassword");
     } else {
-      authTitle.textContent = "Welcome to COLONY FILE";
+      authTitle.textContent = authText("welcome");
       authForm.hidden = true;
-      authMessage.textContent = data.user?.role === "admin" ? "Administrator signed in." : "Your account is ready. File workspace features are coming next.";
+      authMessage.textContent = data.user?.role === "admin" ? authText("adminSigned") : authText("accountReady");
       if (data.user?.role === "admin" && data.user?.email?.toLowerCase() === "hanih9823@gmail.com") {
         document.getElementById("admin-area").hidden = false;
         loadAdminRequests();
@@ -124,10 +155,10 @@ resetForm.addEventListener("submit", async event => {
   event.preventDefault();
   const email = new FormData(resetForm).get("email");
   const button = resetForm.querySelector("button[type=submit]");
-  button.disabled = true; authMessage.textContent = "Sending request…";
+  button.disabled = true; authMessage.textContent = authText("sending");
   try {
     const data = await api("/auth/password-reset-request",{email});
-    authMessage.textContent = data.message || "Request submitted.";
+    authMessage.textContent = data.message || authText("requestSent");
   } catch(error) { authMessage.textContent = error.message; }
   finally { button.disabled = false; }
 });
@@ -135,10 +166,10 @@ changeForm.addEventListener("submit", async event => {
   event.preventDefault();
   const values = new FormData(changeForm);
   const button = changeForm.querySelector("button[type=submit]");
-  button.disabled = true; authMessage.textContent = "Updating password…";
+  button.disabled = true; authMessage.textContent = authText("updating");
   try {
     const data = await api("/auth/change-password",{currentPassword:values.get("currentPassword"),newPassword:values.get("newPassword")});
-    authMessage.textContent = data.message || "Password updated. Please sign in again.";
+    authMessage.textContent = data.message || authText("passwordUpdated");
     changeForm.reset();
   } catch(error) { authMessage.textContent = error.message; }
   finally { button.disabled = false; }
