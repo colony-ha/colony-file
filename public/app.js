@@ -181,3 +181,19 @@ async function loadAdminRequests() {
   } catch(error) { list.textContent = error.message; }
 }
 document.getElementById("admin-refresh").addEventListener("click", loadAdminRequests);
+
+const adminSetupArea=document.getElementById("admin-setup-area");
+if(location.hash==="#admin-setup") adminSetupArea.hidden=false;
+document.getElementById("admin-setup-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const form=event.currentTarget, values=new FormData(form), button=form.querySelector("button"), message=document.getElementById("admin-setup-message");
+  button.disabled=true; message.textContent="Activating administrator…";
+  try {
+    const response=await fetch(API+"/admin/bootstrap",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({setupKey:values.get("setupKey"),email:values.get("email"),password:values.get("password")})});
+    const data=await response.json();
+    if(!response.ok) throw new Error(data.error||"Setup failed.");
+    message.textContent=data.message||"Administrator activated. Sign in normally.";
+    form.reset();
+  } catch(error) { message.textContent=error.message; }
+  finally { button.disabled=false; }
+});
