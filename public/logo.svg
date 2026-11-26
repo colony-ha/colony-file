@@ -1,12 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
 <defs>
- <linearGradient id="gold" x1="90" y1="75" x2="425" y2="435" gradientUnits="userSpaceOnUse"><stop stop-color="#F3D895"/><stop offset=".52" stop-color="#D6AD57"/><stop offset="1" stop-color="#A8792E"/></linearGradient>
- <filter id="glow" x="30" y="25" width="452" height="462" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="12"/></filter>
+  <linearGradient id="gold" x1="105" y1="75" x2="405" y2="430" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#F6DEA5"/>
+    <stop offset=".48" stop-color="#D9B15F"/>
+    <stop offset="1" stop-color="#A9782D"/>
+  </linearGradient>
+  <filter id="softGlow" x="45" y="45" width="422" height="422" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+    <feGaussianBlur stdDeviation="9"/>
+  </filter>
 </defs>
-<circle cx="256" cy="256" r="224" fill="#0B0B0A"/>
-<path d="M130 335h245c45 0 75-30 75-70 0-38-29-67-66-70-10-61-60-105-124-105-58 0-108 37-124 90-47 1-84 36-84 80 0 43 34 75 78 75Z" stroke="url(#gold)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" opacity=".25" filter="url(#glow)"/>
-<path d="M130 335h245c45 0 75-30 75-70 0-38-29-67-66-70-10-61-60-105-124-105-58 0-108 37-124 90-47 1-84 36-84 80 0 43 34 75 78 75Z" stroke="url(#gold)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M158 226h82l27 27h88v112H158V226Z" fill="#17140E" stroke="url(#gold)" stroke-width="16" stroke-linejoin="round"/>
-<path d="M256 315v-91m0 0-34 34m34-34 34 34" stroke="url(#gold)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M184 366h144" stroke="url(#gold)" stroke-width="10" stroke-linecap="round" opacity=".75"/>
+<circle cx="256" cy="256" r="238" fill="#090909"/>
+<circle cx="256" cy="256" r="226" stroke="#D6AD57" stroke-opacity=".12" stroke-width="2"/>
+<!-- Balanced cloud silhouette -->
+<path d="M139 348h236c48 0 83-34 83-78 0-42-32-75-74-78-12-64-65-109-128-109-58 0-108 37-126 91-47 3-82 39-82 86 0 51 38 88 91 88Z"
+      stroke="url(#gold)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" opacity=".28" filter="url(#softGlow)"/>
+<path d="M139 348h236c48 0 83-34 83-78 0-42-32-75-74-78-12-64-65-109-128-109-58 0-108 37-126 91-47 3-82 39-82 86 0 51 38 88 91 88Z"
+      stroke="url(#gold)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- Folder -->
+<path d="M151 253c0-8 6-14 14-14h77l27 27h91c8 0 14 6 14 14v91c0 8-6 14-14 14H165c-8 0-14-6-14-14v-118Z"
+      fill="#17130B" stroke="url(#gold)" stroke-width="14" stroke-linejoin="round"/>
+<path d="M256 333v-89m0 0-31 31m31-31 31 31"
+      stroke="url(#gold)" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M183 366h146" stroke="#D9B15F" stroke-width="7" stroke-linecap="round" opacity=".65"/>
 </svg>
