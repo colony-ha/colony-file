@@ -77,10 +77,10 @@ function showAuth(mode) {
   document.getElementById("auth-switch-label").textContent = mode === "login" ? "New to COLONY FILE?" : "Already have an account?";
   document.getElementById("auth-switch").textContent = mode === "login" ? "Create account" : "Sign in";
   authMessage.textContent = "";
-  authArea.scrollIntoView({behavior:"smooth",block:"center"});
+  document.body.style.overflow = "hidden";
 }
-document.querySelectorAll("[data-auth-open]").forEach(button => button.addEventListener("click", () => showAuth(button.dataset.authOpen)));
-document.getElementById("auth-close").addEventListener("click", () => { authArea.hidden = true; });
+document.querySelectorAll("[data-auth-open]").forEach(button => button.addEventListener("click", event => { event.preventDefault(); showAuth(button.dataset.authOpen); }));
+document.getElementById("auth-close").addEventListener("click", () => { authArea.hidden = true; document.body.style.overflow = ""; });
 document.getElementById("admin-area").hidden = true;
 document.getElementById("auth-switch").addEventListener("click", () => showAuth(authMode === "login" ? "register" : "login"));
 document.getElementById("forgot-open").addEventListener("click", () => {
