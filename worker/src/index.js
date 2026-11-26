@@ -271,6 +271,48 @@ export default {
         return reply({ ok:true, file:{id,original_name:name,mime_type:mime,size_bytes:size,folder_id:folderId} },201);
       }
 
+      if (url.pathname === "/subscription" && request.method === "GET") {
+        const user = await currentUser(request, env);
+        if (!user) return reply({ error: "Please sign in." }, 401);
+        const latest = await env.DB.prepare("SELECT id,plan,status,starts_at,ends_at,created_at FROM subscriptions WHERE user_id=? ORDER BY created_at DESC LIMIT 1").bind(user.id).first();
+        return reply({ plan:user.plan, storage_limit_bytes:user.storage_limit_bytes, subscription:latest || null });
+      }
+
+      if (url.pathname === "/subscription/request" && request.method === "POST") {
+        const user = await currentUser(request, env);
+        if (!user) return reply({ error: "Please sign in." }, 401);
+        const pending = await env.DB.prepare("SELECT id FROM subscriptions WHERE user_id=? AND plan='PRO' AND status='pending'").bind(user.id).first();
+        if (pending) return reply({ error: "Your PRO request is already pending." }, 409);
+        const id=crypto.randomUUID();
+        await env.DB.prepare("INSERT INTO subscriptions (id,user_id,plan,status) VALUES (?,?,'PRO','pending')").bind(id,user.id).run();
+        return reply({ ok:true, message:"Your PRO subscription request was sent for administrator review." },201);
+      }
+
+      if (url.pathname.startsWith("/public/share/") && request.method === "GET") {
+        const parts=url.pathname.split("/");
+        const token=parts[3]||"";
+        const isDownload=parts[4]==="download";
+        if (!/^[a-f0-9]{48,80}$/.test(token)) return reply({error:"Invalid or unavailable share link."},404);
+        const link=await env.DB.prepare("SELECT f.id,f.object_key,f.original_name,f.mime_type,f.size_bytes FROM share_links s JOIN files f ON f.id=s.file_id WHERE s.token_hash=? AND s.is_active=1 AND (s.expires_at IS NULL OR s.expires_at>?) AND f.status='active'").bind(await digest(token),now()).first();
+        if(!link) return reply({error:"This share link is unavailable or has expired."},404);
+        if(!isDownload) return reply({ok:true,file:{name:link.original_name,size_bytes:link.size_bytes,mime_type:link.mime_type}});
+        const object=await env.FILES.get(link.object_key);
+        if(!object) return reply({error:"Stored file is missing."},404);
+        const safeName=encodeURIComponent(link.original_name).replaceAll("%20","+");
+        return new Response(object.body,{headers:{...cors,"Content-Type":"application/octet-stream","Content-Disposition":"attachment; filename*=UTF-8''"+safeName,"Cache-Control":"private, no-store"}});
+      }
+
+      if (url.pathname.startsWith("/files/") && url.pathname.endsWith("/share") && request.method === "POST") {
+        const user=await currentUser(request,env);
+        if(!user) return reply({error:"Please sign in."},401);
+        const id=url.pathname.split("/")[2];
+        const file=await env.DB.prepare("SELECT id FROM files WHERE id=? AND user_id=? AND status='active'").bind(id,user.id).first();
+        if(!file) return reply({error:"File not found."},404);
+        const token=random(24);
+        await env.DB.prepare("INSERT INTO share_links (id,token_hash,owner_user_id,file_id) VALUES (?,?,?,?)").bind(crypto.randomUUID(),await digest(token),user.id,id).run();
+        return reply({ok:true,url:SITE_ORIGIN+"/share.html?token="+token});
+      }
+
       if (url.pathname.startsWith("/files/") && url.pathname.endsWith("/download") && request.method === "GET") {
         const user = await currentUser(request, env);
         if (!user) return reply({ error: "Please sign in." }, 401);
