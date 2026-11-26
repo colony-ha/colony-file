@@ -279,7 +279,7 @@ export default {
         if (!file) return reply({ error: "File not found." }, 404);
         const object = await env.FILES.get(file.object_key);
         if (!object) return reply({ error: "Stored file is missing." }, 404);
-        const safeName = file.original_name.replace(/[\r\n"]/g,"_");
+        const safeName = encodeURIComponent(file.original_name).replaceAll("%20","+");
         return new Response(object.body,{headers:{...cors,"Content-Type":file.mime_type,"Content-Disposition":"attachment; filename*=UTF-8''" + safeName,"Cache-Control":"private, no-store"}});
       }
 
