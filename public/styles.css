@@ -14,3 +14,19 @@
 
 .admin-area{max-width:1144px;margin:0 auto 75px;padding:0 22px}.admin-area[hidden]{display:none}.admin-head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:20px}.admin-head h2{font-size:30px;margin:10px 0}.admin-panel{border:1px solid var(--line);border-radius:14px;padding:25px;background:#11110f}.admin-panel h3{font:700 17px Manrope;margin:0 0 8px}.admin-panel>p,.admin-request small{font-size:12px;color:#969084}.admin-requests{display:grid;gap:12px;margin-top:20px}.admin-request{padding:16px;border:1px solid rgba(255,255,255,.08);border-radius:10px;display:grid;gap:14px}.admin-request>div:first-child{display:grid;gap:6px}.admin-request strong{color:var(--gold-bright);font-size:13px}.admin-request-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.admin-request-actions input{flex:1;min-width:200px;padding:12px;border:1px solid #39352b;border-radius:8px;background:#090909;color:#fff}.admin-request-actions .button{padding:11px 16px}@media(max-width:600px){.admin-head{align-items:flex-start;flex-direction:column}.admin-panel{padding:18px}.admin-request-actions{align-items:stretch;flex-direction:column}.admin-request-actions input{width:100%}}
 .admin-setup-area{max-width:1144px;margin:35px auto;padding:0 22px}.admin-setup-area[hidden]{display:none}.admin-setup-area .auth-card{max-width:500px}.admin-setup-area form{display:grid;gap:14px}.admin-setup-area label{display:grid;gap:7px;color:#cfc7b8;font-size:12px}.admin-setup-area input{width:100%;padding:13px;border-radius:8px;border:1px solid #39352b;background:#090909;color:#fff;font:inherit}.admin-setup-area p{color:#aaa397;font-size:12px;line-height:1.7}
+/* Keep hidden authentication states truly hidden despite component display rules. */
+.auth-area [hidden],.auth-area form[hidden],.auth-area label[hidden],.admin-setup-area[hidden],.admin-area[hidden]{display:none!important}
+.auth-area{overscroll-behavior:contain}
+.auth-card{overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(214,173,87,.45) transparent}
+.auth-card::-webkit-scrollbar{width:5px}
+.auth-card::-webkit-scrollbar-thumb{background:rgba(214,173,87,.4);border-radius:8px}
+.auth-card form[hidden]{display:none!important}
+.auth-card .full{min-height:46px}
+.auth-card .auth-text-button{display:inline-flex;align-items:center;justify-content:center;min-height:34px}
+.auth-card .auth-switch{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.auth-card label{width:100%}
+.auth-card input{min-height:44px}
+[dir=rtl] .auth-card{text-align:right}
+[dir=rtl] .auth-card .eyebrow{justify-content:flex-start}
+[dir=rtl] .auth-card .auth-close{right:auto;left:18px}
+[dir=rtl] .auth-card .auth-switch{flex-direction:row}
