@@ -56,7 +56,8 @@ async function createSession(env, userId) {
 async function currentUser(request, env) {
   const token = getCookie(request);
   if (!token) return null;
-  const row = await env.DB.prepare(`SELECT u.id,u.email,u.display_name,u.role,u.plan,u.storage_limit_bytes,u.storage_used_bytes
+  const row = await env.DB.prepare(`SELECT u.id,u.email,u.display_name,u.role,u.plan,u.storage_limit_bytes,u.storage_used_bytes,
+    EXISTS(SELECT 1 FROM password_change_required p WHERE p.user_id=u.id) AS must_change_password
     FROM sessions s JOIN users u ON u.id=s.user_id
     WHERE s.token_hash=? AND s.expires_at>? AND u.status='active'`).bind(await digest(token), now()).first();
   return row || null;
@@ -73,6 +74,10 @@ async function ensureResetTable(env) {
     temporary_password_salt TEXT
   )`).run();
   await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_password_reset_status ON password_reset_requests(status,requested_at)").run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS password_change_required (
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  )`).run();
 }
 export default {
   async fetch(request, env) {
@@ -80,6 +85,7 @@ export default {
     if (request.headers.get("Origin") && request.headers.get("Origin") !== SITE_ORIGIN) return reply({ error: "Origin not allowed" }, 403);
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
     try {
+      await ensureResetTable(env);
       if (url.pathname === "/" || url.pathname === "/health") {
         const row = await env.DB.prepare("SELECT 1 AS ok").first();
         return reply({ service: "COLONY FILE API", status: "running", database: row?.ok === 1 ? "connected" : "unknown", storage: env.FILES ? "bound" : "not_bound" });
@@ -99,14 +105,16 @@ export default {
         await env.DB.prepare("INSERT INTO users (id,email,display_name,password_hash,auth_provider,role,plan,storage_limit_bytes) VALUES (?,?,?,?, 'email','user','FREE',1073741824)")
           .bind(id, email, name || null, `${salt}:${hash}`).run();
         const token = await createSession(env, id);
-        return reply({ ok: true, user: { id, email, display_name: name, role: "user", plan: "FREE", storage_limit_bytes: 1073741824, storage_used_bytes: 0 } }, 201, { "Set-Cookie": cookie(token) });
+        return reply({ ok: true, user: { id, email, display_name: name, role: "user", plan: "FREE", storage_limit_bytes: 1073741824, storage_used_bytes: 0, must_change_password: false } }, 201, { "Set-Cookie": cookie(token) });
       }
 
       if (url.pathname === "/auth/login" && request.method === "POST") {
         const body = await request.json();
         const email = String(body.email || "").trim().toLowerCase();
         const password = String(body.password || "");
-        const user = await env.DB.prepare("SELECT id,email,display_name,password_hash,auth_provider,status,role,plan,storage_limit_bytes,storage_used_bytes FROM users WHERE email=?").bind(email).first();
+        const user = await env.DB.prepare(`SELECT id,email,display_name,password_hash,auth_provider,status,role,plan,storage_limit_bytes,storage_used_bytes,
+          EXISTS(SELECT 1 FROM password_change_required p WHERE p.user_id=users.id) AS must_change_password
+          FROM users WHERE email=?`).bind(email).first();
         if (!user || user.status !== "active" || !user.password_hash || !user.password_hash.includes(":")) return reply({ error: "Invalid email or password." }, 401);
         const [salt, hash] = user.password_hash.split(":");
         if (!await verifyPassword(password, salt, hash)) return reply({ error: "Invalid email or password." }, 401);
@@ -118,6 +126,25 @@ export default {
       if (url.pathname === "/auth/me" && request.method === "GET") {
         const user = await currentUser(request, env);
         return user ? reply({ user }) : reply({ user: null }, 401);
+      }
+
+      if (url.pathname === "/auth/change-password" && request.method === "POST") {
+        const user = await currentUser(request, env);
+        if (!user) return reply({ error: "Please sign in again." }, 401);
+        const body = await request.json();
+        const currentPassword = String(body.currentPassword || "");
+        const newPassword = String(body.newPassword || "");
+        if (newPassword.length < 10 || newPassword.length > 128) return reply({ error: "New password must be 10–128 characters." }, 400);
+        const account = await env.DB.prepare("SELECT password_hash FROM users WHERE id=?").bind(user.id).first();
+        if (!account?.password_hash || !account.password_hash.includes(":")) return reply({ error: "Password change is unavailable for this account." }, 400);
+        const [oldSalt, oldHash] = account.password_hash.split(":");
+        if (!await verifyPassword(currentPassword, oldSalt, oldHash)) return reply({ error: "Current password is incorrect." }, 400);
+        const { hash, salt } = await passwordHash(newPassword);
+        await env.DB.batch([
+          env.DB.prepare("UPDATE users SET password_hash=?,updated_at=? WHERE id=?").bind(`${salt}:${hash}`, now(), user.id),
+          env.DB.prepare("DELETE FROM password_change_required WHERE user_id=?").bind(user.id)
+        ]);
+        return reply({ ok: true, message: "Password updated successfully." });
       }
 
       if (url.pathname === "/auth/logout" && request.method === "POST") {
@@ -164,6 +191,7 @@ export default {
           const { hash, salt } = await passwordHash(temporaryPassword);
           await env.DB.batch([
             env.DB.prepare("UPDATE users SET password_hash=?,updated_at=? WHERE id=?").bind(`${salt}:${hash}`, now(), req.user_id),
+            env.DB.prepare("INSERT OR REPLACE INTO password_change_required (user_id) VALUES (?)").bind(req.user_id),
             env.DB.prepare("UPDATE password_reset_requests SET status='approved',reviewed_at=?,reviewed_by=? WHERE id=?").bind(now(), admin.id, id),
             env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(req.user_id)
           ]);
