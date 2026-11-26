@@ -208,7 +208,7 @@ export default {
         const body = await request.json();
         const name = String(body.name || "").trim();
         const parentId = body.parentId ? String(body.parentId) : null;
-        if (!name || name.length > 120 || /[\\/\\0]/.test(name)) return reply({ error: "Folder name must be 1–120 characters and cannot contain slashes." }, 400);
+        if (!name || name.length > 120 || (name.includes("/") || name.includes("\\") || name.includes(String.fromCharCode(0)))) return reply({ error: "Folder name must be 1–120 characters and cannot contain slashes." }, 400);
         if (parentId) {
           const parent = await env.DB.prepare("SELECT id FROM folders WHERE id=? AND user_id=?").bind(parentId, user.id).first();
           if (!parent) return reply({ error: "Parent folder not found." }, 404);
