@@ -1,0 +1,12 @@
+(() => {
+  const saved=(()=>{try{return localStorage.getItem("colony-file-language")||"en"}catch(_){return "en"}})();
+  const language=document.getElementById("language");language.value=saved;
+  const dictionaries={
+    en:{myCloud:"MY CLOUD SPACE",myFiles:"My files",storageUsed:"Storage used",signOut:"Sign out",newFolder:"New folder",uploadFiles:"Upload files",available:"available",empty:"Your files and folders will appear here.",emptyFolder:"This folder is empty.",folderCreated:"Folder created.",uploading:"Uploading",uploaded:"Upload complete.",download:"Download",delete:"Delete",open:"Open",confirmDelete:"Permanently delete this file?",loading:"Loading your cloud space…",home:"Home"},
+    fr:{myCloud:"MON ESPACE CLOUD",myFiles:"Mes fichiers",storageUsed:"Stockage utilisé",signOut:"Déconnexion",newFolder:"Nouveau dossier",uploadFiles:"Importer des fichiers",available:"disponible",empty:"Vos fichiers et dossiers apparaîtront ici.",emptyFolder:"Ce dossier est vide.",folderCreated:"Dossier créé.",uploading:"Importation",uploaded:"Importation terminée.",download:"Télécharger",delete:"Supprimer",open:"Ouvrir",confirmDelete:"Supprimer définitivement ce fichier ?",loading:"Chargement de votre espace cloud…",home:"Accueil"},
+    ar:{myCloud:"مساحتي السحابية",myFiles:"ملفاتي",storageUsed:"المساحة المستعملة",signOut:"تسجيل الخروج",newFolder:"مجلد جديد",uploadFiles:"رفع الملفات",available:"متاحة",empty:"ستظهر ملفاتك ومجلداتك هنا.",emptyFolder:"هذا المجلد فارغ.",folderCreated:"تم إنشاء المجلد.",uploading:"جارٍ رفع",uploaded:"اكتمل الرفع.",download:"تنزيل",delete:"حذف",open:"فتح",confirmDelete:"هل تريد حذف هذا الملف نهائياً؟",loading:"جارٍ تحميل مساحتك السحابية…",home:"الرئيسية"}
+  };
+  function applyLanguage(lang){const d=dictionaries[lang]||dictionaries.en;document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";document.querySelectorAll("[data-i18n]").forEach(el=>{if(d[el.dataset.i18n])el.textContent=d[el.dataset.i18n]});try{localStorage.setItem("colony-file-language",lang)}catch(_){}}
+  applyLanguage(saved);language.addEventListener("change",()=>applyLanguage(language.value));
+  const script=document.createElement("script");script.src="/workspace.js";document.head.append(script);
+})();
