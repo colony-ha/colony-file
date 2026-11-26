@@ -227,7 +227,13 @@ export default {
 
       return reply({ error: "Not found" }, 404);
     } catch (error) {
-      return reply({ error: "Internal server error." }, 500);
+      console.error("COLONY FILE API failure", {
+        path: url.pathname,
+        method: request.method,
+        message: error?.message || String(error),
+        stack: error?.stack || null
+      });
+      return reply({ error: "Internal server error.", requestPath: url.pathname }, 500);
     }
   }
 };
