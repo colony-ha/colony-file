@@ -135,6 +135,7 @@ authForm.addEventListener("submit", async event => {
   try {
     const path = authMode === "register" ? "/auth/register" : "/auth/login";
     const data = await api(path, {email:form.get("email"),password:form.get("password"),displayName:form.get("displayName")});
+    document.dispatchEvent(new CustomEvent("colony:authenticated",{detail:data.user}));
     authMessage.textContent = authText("signed");
     if (data.user?.must_change_password) {
       authForm.hidden = true; resetForm.hidden = true; changeForm.hidden = false;
