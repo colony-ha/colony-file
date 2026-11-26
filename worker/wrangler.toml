@@ -5,7 +5,7 @@ compatibility_date = "2026-11-26"
 [[d1_databases]]
 binding = "DB"
 database_name = "colony-file-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "5e19a6d4-cae1-4a1a-902a-11b639926933"
 
 [[r2_buckets]]
 binding = "FILES"
