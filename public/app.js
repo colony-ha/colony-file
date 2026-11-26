@@ -52,3 +52,86 @@ try { saved = localStorage.getItem('colony-file-language') || 'en'; } catch (_) 
 language.value = saved;
 setLanguage(saved);
 language.addEventListener('change', event => setLanguage(event.target.value));
+
+
+const API = "https://colony-file-api.colonyus666.workers.dev";
+const authArea = document.getElementById("auth-area");
+const authForm = document.getElementById("auth-form");
+const resetForm = document.getElementById("reset-form");
+const changeForm = document.getElementById("change-form");
+const authMessage = document.getElementById("auth-message");
+const authTitle = document.getElementById("auth-title");
+const authSubmit = document.getElementById("auth-submit");
+const nameWrap = document.getElementById("name-wrap");
+let authMode = "login";
+function showAuth(mode) {
+  authMode = mode;
+  authArea.hidden = false;
+  resetForm.hidden = true;
+  changeForm.hidden = true;
+  authForm.hidden = false;
+  nameWrap.hidden = mode !== "register";
+  authTitle.textContent = mode === "register" ? "Create your account" : "Sign in";
+  authSubmit.textContent = mode === "register" ? "Create account" : "Sign in";
+  document.getElementById("forgot-open").hidden = mode !== "login";
+  document.getElementById("auth-switch-label").textContent = mode === "login" ? "New to COLONY FILE?" : "Already have an account?";
+  document.getElementById("auth-switch").textContent = mode === "login" ? "Create account" : "Sign in";
+  authMessage.textContent = "";
+  authArea.scrollIntoView({behavior:"smooth",block:"center"});
+}
+document.querySelectorAll("[data-auth-open]").forEach(button => button.addEventListener("click", () => showAuth(button.dataset.authOpen)));
+document.getElementById("auth-close").addEventListener("click", () => { authArea.hidden = true; });
+document.getElementById("auth-switch").addEventListener("click", () => showAuth(authMode === "login" ? "register" : "login"));
+document.getElementById("forgot-open").addEventListener("click", () => {
+  authForm.hidden = true; resetForm.hidden = false; changeForm.hidden = true;
+  authTitle.textContent = "Reset password"; authMessage.textContent = "";
+});
+document.getElementById("reset-back").addEventListener("click", () => showAuth("login"));
+async function api(path, body) {
+  const response = await fetch(API + path, {method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Something went wrong.");
+  return data;
+}
+authForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = new FormData(authForm);
+  authSubmit.disabled = true; authMessage.textContent = "Please wait…";
+  try {
+    const path = authMode === "register" ? "/auth/register" : "/auth/login";
+    const data = await api(path, {email:form.get("email"),password:form.get("password"),displayName:form.get("displayName")});
+    authMessage.textContent = "Signed in successfully.";
+    if (data.user?.must_change_password) {
+      authForm.hidden = true; resetForm.hidden = true; changeForm.hidden = false;
+      authTitle.textContent = "Change your password";
+    } else {
+      authTitle.textContent = "Welcome to COLONY FILE";
+      authForm.hidden = true;
+      authMessage.textContent = "Your account is ready. File workspace features are coming next.";
+    }
+  } catch(error) { authMessage.textContent = error.message; }
+  finally { authSubmit.disabled = false; }
+});
+resetForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  const email = new FormData(resetForm).get("email");
+  const button = resetForm.querySelector("button[type=submit]");
+  button.disabled = true; authMessage.textContent = "Sending request…";
+  try {
+    const data = await api("/auth/password-reset-request",{email});
+    authMessage.textContent = data.message || "Request submitted.";
+  } catch(error) { authMessage.textContent = error.message; }
+  finally { button.disabled = false; }
+});
+changeForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  const values = new FormData(changeForm);
+  const button = changeForm.querySelector("button[type=submit]");
+  button.disabled = true; authMessage.textContent = "Updating password…";
+  try {
+    const data = await api("/auth/change-password",{currentPassword:values.get("currentPassword"),newPassword:values.get("newPassword")});
+    authMessage.textContent = data.message || "Password updated. Please sign in again.";
+    changeForm.reset();
+  } catch(error) { authMessage.textContent = error.message; }
+  finally { button.disabled = false; }
+});
