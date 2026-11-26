@@ -255,7 +255,12 @@ export default {
         const id = crypto.randomUUID();
         const objectKey = user.id + "/" + id;
         try {
-          await env.FILES.put(objectKey, request.body, { httpMetadata: { contentType: mime } });
+          const storedObject = await env.FILES.put(objectKey, request.body, { httpMetadata: { contentType: mime } });
+          if (storedObject.size !== size) {
+            await env.FILES.delete(objectKey);
+            await env.DB.prepare("UPDATE users SET storage_used_bytes=MAX(0,storage_used_bytes-?) WHERE id=?").bind(size,user.id).run();
+            return reply({ error: "Uploaded file size did not match the declared size. Please retry." }, 400);
+          }
           await env.DB.prepare("INSERT INTO files (id,user_id,folder_id,object_key,original_name,mime_type,size_bytes) VALUES (?,?,?,?,?,?,?)")
             .bind(id,user.id,folderId,objectKey,name,mime,size).run();
         } catch (error) {
