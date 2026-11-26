@@ -91,6 +91,32 @@ export default {
         return reply({ service: "COLONY FILE API", status: "running", database: row?.ok === 1 ? "connected" : "unknown", storage: env.FILES ? "bound" : "not_bound" });
       }
 
+      if (url.pathname === "/admin/bootstrap" && request.method === "POST") {
+        if (!env.ADMIN_BOOTSTRAP_KEY) return reply({ error: "Admin setup is not configured." }, 503);
+        const body = await request.json();
+        const setupKey = String(body.setupKey || "");
+        const email = String(body.email || "").trim().toLowerCase();
+        const password = String(body.password || "");
+        if (setupKey.length < 32 || setupKey !== env.ADMIN_BOOTSTRAP_KEY) return reply({ error: "Invalid setup key." }, 403);
+        if (email !== ADMIN_EMAIL) return reply({ error: "This email is not authorized for the super administrator." }, 403);
+        if (password.length < 10 || password.length > 128) return reply({ error: "Password must be 10–128 characters." }, 400);
+        const existingAdmin = await env.DB.prepare("SELECT id FROM users WHERE role='admin' LIMIT 1").first();
+        if (existingAdmin) return reply({ error: "An administrator is already configured." }, 409);
+        const existing = await env.DB.prepare("SELECT id,password_hash FROM users WHERE email=?").bind(ADMIN_EMAIL).first();
+        if (existing) {
+          if (!existing.password_hash || !existing.password_hash.includes(":")) return reply({ error: "Existing account has no password. Contact support for secure recovery." }, 409);
+          const [oldSalt, oldHash] = existing.password_hash.split(":");
+          if (!await verifyPassword(password, oldSalt, oldHash)) return reply({ error: "Use the existing account password to activate administrator access." }, 403);
+          await env.DB.prepare("UPDATE users SET role='admin',updated_at=? WHERE id=?").bind(now(), existing.id).run();
+          return reply({ ok: true, message: "Super administrator role activated. Sign in normally." });
+        }
+        const { hash, salt } = await passwordHash(password);
+        const id = crypto.randomUUID();
+        await env.DB.prepare("INSERT INTO users (id,email,display_name,password_hash,auth_provider,role,plan,storage_limit_bytes) VALUES (?,?,? ,?,'email','admin','FREE',1073741824)")
+          .bind(id, ADMIN_EMAIL, "COLONY FILE Administrator", `${salt}:${hash}`).run();
+        return reply({ ok: true, message: "Super administrator account created. Sign in normally." }, 201);
+      }
+
       if (url.pathname === "/auth/register" && request.method === "POST") {
         const body = await request.json();
         const email = String(body.email || "").trim().toLowerCase();
