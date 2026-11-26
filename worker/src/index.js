@@ -244,7 +244,7 @@ export default {
         const size = Number(request.headers.get("X-File-Size") || request.headers.get("Content-Length") || 0);
         const folderId = request.headers.get("X-Folder-Id") || null;
         if (!name || name.length > 255 || /[\\0]/.test(name)) return reply({ error: "Invalid file name." }, 400);
-        if (!Number.isSafeInteger(size) || size <= 0 || size > 5 * 1024 * 1024 * 1024) return reply({ error: "Invalid file size." }, 400);
+        if (!Number.isSafeInteger(size) || size < 0 || size > 5 * 1024 * 1024 * 1024) return reply({ error: "Invalid file size." }, 400);
         if (!request.body) return reply({ error: "File content is missing." }, 400);
         if (folderId) {
           const folder = await env.DB.prepare("SELECT id FROM folders WHERE id=? AND user_id=?").bind(folderId,user.id).first();
@@ -280,7 +280,7 @@ export default {
         const object = await env.FILES.get(file.object_key);
         if (!object) return reply({ error: "Stored file is missing." }, 404);
         const safeName = file.original_name.replace(/[\r\n"]/g,"_");
-        return new Response(object.body,{headers:{...cors,"Content-Type":file.mime_type,"Content-Disposition":'attachment; filename="' + safeName + '"',"Cache-Control":"private, no-store"}});
+        return new Response(object.body,{headers:{...cors,"Content-Type":file.mime_type,"Content-Disposition":"attachment; filename*=UTF-8''" + safeName,"Cache-Control":"private, no-store"}});
       }
 
       if (url.pathname.startsWith("/files/") && url.pathname.endsWith("/delete") && request.method === "POST") {
