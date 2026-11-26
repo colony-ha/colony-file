@@ -135,7 +135,6 @@ authForm.addEventListener("submit", async event => {
   try {
     const path = authMode === "register" ? "/auth/register" : "/auth/login";
     const data = await api(path, {email:form.get("email"),password:form.get("password"),displayName:form.get("displayName")});
-    document.dispatchEvent(new CustomEvent("colony:authenticated",{detail:data.user}));
     authMessage.textContent = authText("signed");
     if (data.user?.must_change_password) {
       authForm.hidden = true; resetForm.hidden = true; changeForm.hidden = false;
@@ -143,7 +142,11 @@ authForm.addEventListener("submit", async event => {
     } else {
       authTitle.textContent = authText("welcome");
       authForm.hidden = true;
-      authMessage.textContent = data.user?.role === "admin" ? authText("adminSigned") : authText("accountReady");
+      if (data.user?.role !== "admin") {
+        window.location.assign("/dashboard.html");
+        return;
+      }
+      authMessage.textContent = authText("adminSigned");
       if (data.user?.role === "admin" && data.user?.email?.toLowerCase() === "hanih9823@gmail.com") {
         document.getElementById("admin-area").hidden = false;
         loadAdminRequests();
