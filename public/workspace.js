@@ -5,9 +5,9 @@
   const $ = id => document.getElementById(id);
   let user = null, folderId = null;
   const words = {
-    en:{myCloud:"MY CLOUD SPACE",myFiles:"My files",storageUsed:"Storage used",signOut:"Sign out",newFolder:"New folder",uploadFiles:"Upload files",available:"available",empty:"Your files and folders will appear here.",emptyFolder:"This folder is empty.",folderCreated:"Folder created.",uploading:"Uploading",uploaded:"Upload complete.",download:"Download",delete:"Delete",open:"Open",confirmDelete:"Permanently delete this file?",loading:"Loading your cloud space…"},
-    fr:{myCloud:"MON ESPACE CLOUD",myFiles:"Mes fichiers",storageUsed:"Stockage utilisé",signOut:"Déconnexion",newFolder:"Nouveau dossier",uploadFiles:"Importer des fichiers",available:"disponible",empty:"Vos fichiers et dossiers apparaîtront ici.",emptyFolder:"Ce dossier est vide.",folderCreated:"Dossier créé.",uploading:"Importation",uploaded:"Importation terminée.",download:"Télécharger",delete:"Supprimer",open:"Ouvrir",confirmDelete:"Supprimer définitivement ce fichier ?",loading:"Chargement de votre espace cloud…"},
-    ar:{myCloud:"مساحتي السحابية",myFiles:"ملفاتي",storageUsed:"المساحة المستعملة",signOut:"تسجيل الخروج",newFolder:"مجلد جديد",uploadFiles:"رفع الملفات",available:"متاحة",empty:"ستظهر ملفاتك ومجلداتك هنا.",emptyFolder:"هذا المجلد فارغ.",folderCreated:"تم إنشاء المجلد.",uploading:"جارٍ رفع",uploaded:"اكتمل الرفع.",download:"تنزيل",delete:"حذف",open:"فتح",confirmDelete:"هل تريد حذف هذا الملف نهائياً؟",loading:"جارٍ تحميل مساحتك السحابية…"}
+    en:{myCloud:"MY CLOUD SPACE",myFiles:"My files",storageUsed:"Storage used",signOut:"Sign out",newFolder:"New folder",uploadFiles:"Upload files",available:"available",empty:"Your files and folders will appear here.",emptyFolder:"This folder is empty.",folderCreated:"Folder created.",uploading:"Uploading",uploaded:"Upload complete.",download:"Download",share:"Share",delete:"Delete",open:"Open",confirmDelete:"Permanently delete this file?",loading:"Loading your cloud space…"},
+    fr:{myCloud:"MON ESPACE CLOUD",myFiles:"Mes fichiers",storageUsed:"Stockage utilisé",signOut:"Déconnexion",newFolder:"Nouveau dossier",uploadFiles:"Importer des fichiers",available:"disponible",empty:"Vos fichiers et dossiers apparaîtront ici.",emptyFolder:"Ce dossier est vide.",folderCreated:"Dossier créé.",uploading:"Importation",uploaded:"Importation terminée.",download:"Télécharger",share:"Partager",delete:"Supprimer",open:"Ouvrir",confirmDelete:"Supprimer définitivement ce fichier ?",loading:"Chargement de votre espace cloud…"},
+    ar:{myCloud:"مساحتي السحابية",myFiles:"ملفاتي",storageUsed:"المساحة المستعملة",signOut:"تسجيل الخروج",newFolder:"مجلد جديد",uploadFiles:"رفع الملفات",available:"متاحة",empty:"ستظهر ملفاتك ومجلداتك هنا.",emptyFolder:"هذا المجلد فارغ.",folderCreated:"تم إنشاء المجلد.",uploading:"جارٍ رفع",uploaded:"اكتمل الرفع.",download:"تنزيل",share:"مشاركة",delete:"حذف",open:"فتح",confirmDelete:"هل تريد حذف هذا الملف نهائياً؟",loading:"جارٍ تحميل مساحتك السحابية…"}
   };
   const lang = () => document.getElementById("language")?.value || "en";
   const t = key => words[lang()]?.[key] || words.en[key] || key;
@@ -57,11 +57,19 @@
         const meta=document.createElement("small");meta.textContent=bytes(f.size_bytes);
         info.append(name,meta);
         const dl=document.createElement("button");dl.textContent="↓";dl.title=t("download");dl.onclick=()=>download(f);
+        const share=document.createElement("button");share.textContent="↗";share.title=t("share");share.onclick=()=>createShare(f);
         const del=document.createElement("button");del.textContent="×";del.title=t("delete");del.onclick=()=>remove(f);
-        card.append(ic,info,dl,del);grid.append(card);
+        card.append(ic,info,dl,share,del);grid.append(card);
       });
       $("workspace-message").textContent="";
     } catch(e){$("workspace-message").textContent=e.message;}
+  }
+  async function createShare(f) {
+    try {
+      const d=await request("/files/"+encodeURIComponent(f.id)+"/share",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+      await navigator.clipboard.writeText(d.url);
+      $("workspace-message").textContent=(lang()==="ar"?"تم إنشاء رابط المشاركة ونسخه: ":lang()==="fr"?"Lien de partage créé et copié : ":"Share link created and copied: ")+d.url;
+    } catch(e) {$("workspace-message").textContent=e.message+" — "+(lang()==="ar"?"انسخ الرابط يدوياً إذا لزم الأمر.":"");}
   }
   async function download(f) {
     try { const r=await fetch(API+"/files/"+encodeURIComponent(f.id)+"/download",{credentials:"include"}); if(!r.ok) throw new Error("Download failed."); const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=f.original_name;document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url); }
