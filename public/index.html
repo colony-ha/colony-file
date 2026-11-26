@@ -86,6 +86,19 @@
       </div>
     </section>
 
+    <section class="admin-setup-area" id="admin-setup-area" hidden>
+      <div class="auth-card">
+        <div class="eyebrow">SECURE INITIALIZATION</div><h2>Super administrator setup</h2>
+        <p>One-time activation for hanih9823@gmail.com. Configure the Worker secret ADMIN_BOOTSTRAP_KEY in Cloudflare first, then enter the same key here.</p>
+        <form id="admin-setup-form">
+          <label>One-time setup key<input name="setupKey" type="password" minlength="32" required autocomplete="off"></label>
+          <label>Administrator email<input name="email" type="email" value="hanih9823@gmail.com" readonly></label>
+          <label>Administrator password<input name="password" type="password" minlength="10" maxlength="128" required autocomplete="new-password"></label>
+          <button class="button button-gold full" type="submit">Activate super administrator</button>
+        </form>
+        <p class="auth-message" id="admin-setup-message" role="status" aria-live="polite"></p>
+      </div>
+    </section>
     <section class="admin-area" id="admin-area" hidden>
       <div class="admin-head"><div><div class="eyebrow">COLONY FILE CONTROL CENTER</div><h2>Administrator dashboard</h2></div><button class="button button-outline" id="admin-refresh" type="button">Refresh requests</button></div>
       <div class="admin-panel"><h3>Password reset requests</h3><p>Review requests and issue a temporary password when approving.</p><div id="admin-requests" class="admin-requests"><p>Loading requests…</p></div></div>
