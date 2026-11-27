@@ -57,3 +57,20 @@
 .admin-request a{display:inline-block;color:#e8c65a;margin:8px 0;text-decoration:underline}
 .admin-request{overflow-wrap:anywhere}
 @media(max-width:680px){.settings-grid{grid-template-columns:1fr}.payment-total{align-items:flex-start;flex-direction:column}}
+
+/* Larger, clearly labelled file actions on customer dashboard */
+.workspace-item{flex-wrap:wrap;align-items:center}
+.workspace-item .item-info{flex:1 1 120px}
+.file-actions{display:flex;align-items:center;gap:8px;flex:1 0 100%;margin-top:5px}
+.workspace-item .file-action{display:inline-flex;align-items:center;justify-content:center;flex:1;min-height:44px;padding:10px 13px;border:1px solid rgba(214,173,87,.38);border-radius:9px;background:rgba(214,173,87,.07);color:var(--gold-bright);font-size:12px;font-weight:700;white-space:nowrap}
+.workspace-item .file-action-share{background:rgba(214,173,87,.16);border-color:rgba(214,173,87,.65);color:#f4d58f}
+.workspace-item .file-action-delete{border-color:rgba(190,90,75,.45);color:#e6a094;background:rgba(190,90,75,.07)}
+.workspace-item .file-action:active{transform:scale(.98)}
+@media(max-width:600px){
+ .workspace-grid{grid-template-columns:1fr}
+ .workspace-item{padding:14px;gap:10px}
+ .workspace-item strong{font-size:13px}
+ .workspace-item small{font-size:11px}
+ .file-actions{gap:7px}
+ .workspace-item .file-action{min-height:46px;padding:11px 8px;font-size:12px}
+}
