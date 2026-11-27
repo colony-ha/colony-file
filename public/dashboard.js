@@ -9,15 +9,8 @@
   function applyLanguage(lang){const d=dictionaries[lang]||dictionaries.en;document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";document.querySelectorAll("[data-i18n]").forEach(el=>{if(d[el.dataset.i18n])el.textContent=d[el.dataset.i18n]});try{localStorage.setItem("colony-file-language",lang)}catch(_){}}
   applyLanguage(saved);
   const subscribeButton=document.getElementById("subscribe-pro");
-  if(subscribeButton) subscribeButton.addEventListener("click",async()=>{
-    const status=document.getElementById("subscription-status");subscribeButton.disabled=true;
-    try{
-      const response=await fetch("https://colony-file-api.colonyus666.workers.dev/subscription/request",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:"{}"});
-      const data=await response.json();if(!response.ok)throw new Error(data.error||"Request failed.");
-      status.textContent=dictionaries[language.value]?.requestSent||dictionaries.en.requestSent;
-      subscribeButton.textContent=dictionaries[language.value]?.pending||dictionaries.en.pending;
-    }catch(e){status.textContent=e.message;subscribeButton.disabled=false;}
-  });
+  if(subscribeButton) subscribeButton.addEventListener("click",()=>{window.location.assign("/subscription.html")});
+  fetch("https://colony-file-api.colonyus666.workers.dev/auth/me",{credentials:"include"}).then(r=>r.json()).then(d=>{if(d.user?.role==="admin")window.location.assign("/admin.html")}).catch(()=>{});
   language.addEventListener("change",()=>applyLanguage(language.value));
   const script=document.createElement("script");script.src="/workspace.js";document.head.append(script);
 })();
