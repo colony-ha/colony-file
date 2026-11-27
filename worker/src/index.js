@@ -62,6 +62,22 @@ async function currentUser(request, env) {
     WHERE s.token_hash=? AND s.expires_at>? AND u.status='active'`).bind(await digest(token), now()).first();
   return row || null;
 }
+async function ensurePaymentSettings(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS app_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  )`).run();
+  await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('usd_dzd_rate','260')").run();
+  await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('ccp_details','')").run();
+  await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('cpa_details','')").run();
+  await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('cepa_details','')").run();
+}
+async function paymentSettings(env) {
+  const rows=await env.DB.prepare("SELECT setting_key,setting_value FROM app_settings").all();
+  const values=Object.fromEntries((rows.results||[]).map(x=>[x.setting_key,x.setting_value]));
+  return {usd_dzd_rate:Number(values.usd_dzd_rate||260),ccp_details:values.ccp_details||"",cpa_details:values.cpa_details||"",cepa_details:values.cepa_details||""};
+}
 async function ensureResetTable(env) {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS password_reset_requests (
     id TEXT PRIMARY KEY,
@@ -86,6 +102,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
     try {
       await ensureResetTable(env);
+      await ensurePaymentSettings(env);
       if (url.pathname === "/" || url.pathname === "/health") {
         const row = await env.DB.prepare("SELECT 1 AS ok").first();
         return reply({ service: "COLONY FILE API", status: "running", database: row?.ok === 1 ? "connected" : "unknown", storage: env.FILES ? "bound" : "not_bound" });
@@ -283,24 +300,61 @@ export default {
           user.plan="FREE"; user.storage_limit_bytes=1073741824;
         }
         const latest = await env.DB.prepare("SELECT id,plan,status,starts_at,ends_at,created_at FROM subscriptions WHERE user_id=? ORDER BY created_at DESC LIMIT 1").bind(user.id).first();
-        return reply({ plan:user.plan, storage_limit_bytes:user.storage_limit_bytes, subscription:latest || null });
+        const settings=await paymentSettings(env);
+        return reply({ plan:user.plan, storage_limit_bytes:user.storage_limit_bytes, subscription:latest || null, payment:settings, pro_price_usd:5, pro_price_dzd:Math.round(5*settings.usd_dzd_rate) });
       }
 
       if (url.pathname === "/subscription/request" && request.method === "POST") {
-        const user = await currentUser(request, env);
-        if (!user) return reply({ error: "Please sign in." }, 401);
-        if (user.plan === "PRO") return reply({ error: "You are already on PRO." }, 409);
-        const body = await request.json().catch(() => ({}));
-        const reference = String(body.reference || "").trim().slice(0,160);
-        if (!reference) return reply({ error: "Enter your payment reference or transaction details." }, 400);
-        const pending = await env.DB.prepare("SELECT id FROM subscriptions WHERE user_id=? AND plan='PRO' AND status='pending'").bind(user.id).first();
-        if (pending) return reply({ error: "Your PRO request is already pending." }, 409);
-        const id=crypto.randomUUID();
-        await env.DB.batch([
-          env.DB.prepare("INSERT INTO subscriptions (id,user_id,plan,status) VALUES (?,?,'PRO','pending')").bind(id,user.id),
-          env.DB.prepare("INSERT INTO payment_proofs (id,user_id,plan,proof_object_key,status) VALUES (?,?,'PRO',?,'pending')").bind(crypto.randomUUID(),user.id,"manual:"+reference)
-        ]);
-        return reply({ ok:true, message:"Your PRO request and payment reference were sent for administrator review." },201);
+        const user=await currentUser(request,env);
+        if(!user)return reply({error:"Please sign in."},401);
+        if(user.plan==="PRO")return reply({error:"You are already on PRO."},409);
+        const pending=await env.DB.prepare("SELECT id FROM subscriptions WHERE user_id=? AND plan='PRO' AND status='pending'").bind(user.id).first();
+        if(pending)return reply({error:"Your PRO request is already pending."},409);
+        const form=await request.formData();
+        const method=String(form.get("method")||"").toLowerCase();
+        const reference=String(form.get("reference")||"").trim().slice(0,160);
+        const file=form.get("receipt");
+        if(!["ccp","cpa","cepa"].includes(method))return reply({error:"Choose a payment method."},400);
+        if(!file || typeof file.arrayBuffer!=="function" || !file.size)return reply({error:"Attach your payment receipt."},400);
+        if(file.size>10*1024*1024)return reply({error:"Receipt must be 10 MB or smaller."},400);
+        const proofId=crypto.randomUUID(),subId=crypto.randomUUID();
+        const key="payment-proofs/"+user.id+"/"+proofId;
+        await env.FILES.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type||"application/octet-stream"}});
+        try{
+          await env.DB.batch([
+            env.DB.prepare("INSERT INTO subscriptions (id,user_id,plan,status) VALUES (?,?,'PRO','pending')").bind(subId,user.id),
+            env.DB.prepare("INSERT INTO payment_proofs (id,user_id,plan,proof_object_key,status) VALUES (?,?,'PRO',?,'pending')").bind(proofId,user.id,JSON.stringify({key,method,reference,filename:String(file.name||"receipt").slice(0,180)}))
+          ]);
+        }catch(error){await env.FILES.delete(key);throw error}
+        return reply({ok:true,message:"Payment receipt submitted for administrator review."},201);
+      }
+
+      if (url.pathname === "/admin/payment-settings" && request.method === "GET") {
+        const admin=await currentUser(request,env);
+        if(!admin||admin.role!=="admin"||admin.email.toLowerCase()!==ADMIN_EMAIL||admin.must_change_password)return reply({error:"Administrator access required."},403);
+        return reply({settings:await paymentSettings(env)});
+      }
+      if (url.pathname === "/admin/payment-settings" && request.method === "POST") {
+        const admin=await currentUser(request,env);
+        if(!admin||admin.role!=="admin"||admin.email.toLowerCase()!==ADMIN_EMAIL||admin.must_change_password)return reply({error:"Administrator access required."},403);
+        const body=await request.json();
+        const rate=Number(body.usd_dzd_rate);
+        if(!Number.isFinite(rate)||rate<1||rate>100000)return reply({error:"Enter a valid USD to DZD exchange rate."},400);
+        const entries=[["usd_dzd_rate",String(rate)],["ccp_details",String(body.ccp_details||"").trim().slice(0,2000)],["cpa_details",String(body.cpa_details||"").trim().slice(0,2000)],["cepa_details",String(body.cepa_details||"").trim().slice(0,2000)]];
+        await env.DB.batch(entries.map(([k,v])=>env.DB.prepare("INSERT INTO app_settings (setting_key,setting_value,updated_at) VALUES (?,?,?) ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_at=excluded.updated_at").bind(k,v,now())));
+        return reply({ok:true,settings:await paymentSettings(env)});
+      }
+
+      if (url.pathname.startsWith("/admin/payment-proof/") && request.method === "GET") {
+        const admin=await currentUser(request,env);
+        if(!admin||admin.role!=="admin"||admin.email.toLowerCase()!==ADMIN_EMAIL||admin.must_change_password)return reply({error:"Administrator access required."},403);
+        const id=url.pathname.split("/")[3];
+        const proof=await env.DB.prepare("SELECT proof_object_key FROM payment_proofs WHERE id=?").bind(id).first();
+        if(!proof)return reply({error:"Receipt not found."},404);
+        let meta;try{meta=JSON.parse(proof.proof_object_key)}catch(_){return reply({error:"Legacy proof has no uploaded receipt."},404)}
+        const object=await env.FILES.get(meta.key);
+        if(!object)return reply({error:"Receipt file is missing."},404);
+        return new Response(object.body,{headers:{...cors,"Content-Type":object.httpMetadata?.contentType||"application/octet-stream","Content-Disposition":"inline; filename*=UTF-8''"+encodeURIComponent(meta.filename||"receipt"),"Cache-Control":"private, no-store"}});
       }
 
       if (url.pathname === "/admin/overview" && request.method === "GET") {
