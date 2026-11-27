@@ -104,3 +104,12 @@
 #payment-instructions{display:block!important;visibility:visible!important;min-height:100px;padding:18px!important;background:#15120c!important;color:#fff!important;border:1px solid rgba(214,173,87,.6)!important}
 #payment-instructions strong{display:block!important;color:#f2cf7c!important;font-size:16px;margin-bottom:12px}
 #payment-instructions p{display:block!important;color:#fff!important;font-size:15px;line-height:2;white-space:pre-line;overflow-wrap:anywhere}
+
+.payment-method-area{margin:16px 0 8px}
+.payment-method-area>label{display:block;margin-bottom:10px;font-weight:700}
+.payment-method-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.payment-method-tab{min-height:58px;padding:12px 10px;border:1px solid rgba(214,173,87,.55);border-radius:13px;background:#17150f;color:#f5f1e8;font:inherit;font-weight:800;font-size:15px;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
+.payment-method-tab:hover{border-color:#e3bd69}
+.payment-method-tab.active{background:linear-gradient(135deg,#d9ad53,#f4d88e);color:#17120a;border-color:#f4d88e;box-shadow:0 0 0 2px rgba(214,173,87,.18)}
+.payment-method-tab:focus-visible{outline:2px solid #f4d88e;outline-offset:3px}
+@media(max-width:520px){.payment-method-tabs{gap:7px}.payment-method-tab{font-size:13px;padding:10px 5px;min-height:54px}}
