@@ -352,6 +352,17 @@ export default {
             env.DB.prepare("UPDATE users SET plan='FREE',storage_limit_bytes=1073741824,updated_at=? WHERE id=?").bind(now(),id),
             env.DB.prepare("UPDATE subscriptions SET status='expired' WHERE user_id=? AND status='active'").bind(id)
           ]);
+        } else if(action==="pro") {
+          const start=now(),end=new Date(Date.now()+30*86400000).toISOString();
+          await env.DB.batch([
+            env.DB.prepare("UPDATE subscriptions SET status='expired' WHERE user_id=? AND status='active'").bind(id),
+            env.DB.prepare("INSERT INTO subscriptions (id,user_id,plan,status,starts_at,ends_at,granted_by_admin_id) VALUES (?,?,'PRO','active',?,?,?)").bind(crypto.randomUUID(),id,start,end,admin.id),
+            env.DB.prepare("UPDATE users SET plan='PRO',storage_limit_bytes=5368709120,updated_at=? WHERE id=?").bind(start,id)
+          ]);
+        } else if(action==="delete") {
+          const files=await env.DB.prepare("SELECT object_key FROM files WHERE user_id=?").bind(id).all();
+          for(const file of files.results||[]) await env.FILES.delete(file.object_key);
+          await env.DB.prepare("DELETE FROM users WHERE id=?").bind(id).run();
         } else return reply({error:"Unsupported user action."},400);
         return reply({ok:true});
       }
