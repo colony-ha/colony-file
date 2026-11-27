@@ -274,6 +274,14 @@ export default {
       if (url.pathname === "/subscription" && request.method === "GET") {
         const user = await currentUser(request, env);
         if (!user) return reply({ error: "Please sign in." }, 401);
+        const active = await env.DB.prepare("SELECT id,ends_at FROM subscriptions WHERE user_id=? AND status='active' ORDER BY created_at DESC LIMIT 1").bind(user.id).first();
+        if (user.plan === "PRO" && active?.ends_at && active.ends_at <= now()) {
+          await env.DB.batch([
+            env.DB.prepare("UPDATE subscriptions SET status='expired' WHERE id=?").bind(active.id),
+            env.DB.prepare("UPDATE users SET plan='FREE',storage_limit_bytes=1073741824,updated_at=? WHERE id=?").bind(now(),user.id)
+          ]);
+          user.plan="FREE"; user.storage_limit_bytes=1073741824;
+        }
         const latest = await env.DB.prepare("SELECT id,plan,status,starts_at,ends_at,created_at FROM subscriptions WHERE user_id=? ORDER BY created_at DESC LIMIT 1").bind(user.id).first();
         return reply({ plan:user.plan, storage_limit_bytes:user.storage_limit_bytes, subscription:latest || null });
       }
