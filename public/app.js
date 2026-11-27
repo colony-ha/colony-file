@@ -142,15 +142,16 @@ authForm.addEventListener("submit", async event => {
     } else {
       authTitle.textContent = authText("welcome");
       authForm.hidden = true;
-      if (data.user?.role !== "admin") {
-        window.location.assign("/dashboard.html");
+      if (data.user?.role === "admin") {
+        if (data.user?.email?.toLowerCase() !== "hanih9823@gmail.com") {
+          authMessage.textContent = "Administrator account is not authorized.";
+          return;
+        }
+        window.location.assign("/admin.html");
         return;
       }
-      authMessage.textContent = authText("adminSigned");
-      if (data.user?.role === "admin" && data.user?.email?.toLowerCase() === "hanih9823@gmail.com") {
-        document.getElementById("admin-area").hidden = false;
-        loadAdminRequests();
-      }
+      window.location.assign("/dashboard.html");
+      return;
     }
   } catch(error) { authMessage.textContent = error.message; }
   finally { authSubmit.disabled = false; }
