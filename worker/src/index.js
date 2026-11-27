@@ -281,11 +281,71 @@ export default {
       if (url.pathname === "/subscription/request" && request.method === "POST") {
         const user = await currentUser(request, env);
         if (!user) return reply({ error: "Please sign in." }, 401);
+        if (user.plan === "PRO") return reply({ error: "You are already on PRO." }, 409);
+        const body = await request.json().catch(() => ({}));
+        const reference = String(body.reference || "").trim().slice(0,160);
+        if (!reference) return reply({ error: "Enter your payment reference or transaction details." }, 400);
         const pending = await env.DB.prepare("SELECT id FROM subscriptions WHERE user_id=? AND plan='PRO' AND status='pending'").bind(user.id).first();
         if (pending) return reply({ error: "Your PRO request is already pending." }, 409);
         const id=crypto.randomUUID();
-        await env.DB.prepare("INSERT INTO subscriptions (id,user_id,plan,status) VALUES (?,?,'PRO','pending')").bind(id,user.id).run();
-        return reply({ ok:true, message:"Your PRO subscription request was sent for administrator review." },201);
+        await env.DB.batch([
+          env.DB.prepare("INSERT INTO subscriptions (id,user_id,plan,status) VALUES (?,?,'PRO','pending')").bind(id,user.id),
+          env.DB.prepare("INSERT INTO payment_proofs (id,user_id,plan,proof_object_key,status) VALUES (?,?,'PRO',?,'pending')").bind(crypto.randomUUID(),user.id,"manual:"+reference)
+        ]);
+        return reply({ ok:true, message:"Your PRO request and payment reference were sent for administrator review." },201);
+      }
+
+      if (url.pathname === "/admin/overview" && request.method === "GET") {
+        const admin = await currentUser(request, env);
+        if (!admin || admin.role !== "admin" || admin.email.toLowerCase() !== ADMIN_EMAIL || admin.must_change_password) return reply({error:"Administrator access required."},403);
+        const [users,requests,proofs,resets] = await Promise.all([
+          env.DB.prepare("SELECT id,email,display_name,status,role,plan,storage_limit_bytes,storage_used_bytes,created_at FROM users ORDER BY created_at DESC LIMIT 300").all(),
+          env.DB.prepare("SELECT s.id,s.user_id,s.status,s.created_at,u.email,u.display_name FROM subscriptions s JOIN users u ON u.id=s.user_id WHERE s.status='pending' ORDER BY s.created_at DESC LIMIT 100").all(),
+          env.DB.prepare("SELECT p.id,p.user_id,p.proof_object_key,p.status,p.created_at,u.email FROM payment_proofs p JOIN users u ON u.id=p.user_id WHERE p.status='pending' ORDER BY p.created_at DESC LIMIT 100").all(),
+          env.DB.prepare("SELECT r.id,r.status,r.requested_at,u.email,u.display_name FROM password_reset_requests r JOIN users u ON u.id=r.user_id WHERE r.status='pending' ORDER BY r.requested_at DESC LIMIT 100").all()
+        ]);
+        return reply({users:users.results,subscriptions:requests.results,paymentProofs:proofs.results,passwordResets:resets.results});
+      }
+
+      if (url.pathname === "/admin/subscriptions/review" && request.method === "POST") {
+        const admin = await currentUser(request, env);
+        if (!admin || admin.role !== "admin" || admin.email.toLowerCase() !== ADMIN_EMAIL || admin.must_change_password) return reply({error:"Administrator access required."},403);
+        const body=await request.json(), id=String(body.id||""), action=String(body.action||"");
+        if(!id || !["approve","reject"].includes(action)) return reply({error:"Invalid review request."},400);
+        const sub=await env.DB.prepare("SELECT id,user_id,status FROM subscriptions WHERE id=? AND plan='PRO'").bind(id).first();
+        if(!sub || sub.status!=="pending") return reply({error:"Pending subscription not found."},404);
+        if(action==="reject"){
+          await env.DB.batch([
+            env.DB.prepare("UPDATE subscriptions SET status='cancelled' WHERE id=?").bind(id),
+            env.DB.prepare("UPDATE payment_proofs SET status='rejected',reviewed_by=?,reviewed_at=? WHERE user_id=? AND status='pending'").bind(admin.id,now(),sub.user_id)
+          ]);
+          return reply({ok:true});
+        }
+        const start=now(), end=new Date(Date.now()+30*86400000).toISOString();
+        await env.DB.batch([
+          env.DB.prepare("UPDATE subscriptions SET status='expired' WHERE user_id=? AND status='active'").bind(sub.user_id),
+          env.DB.prepare("UPDATE subscriptions SET status='active',starts_at=?,ends_at=?,granted_by_admin_id=? WHERE id=?").bind(start,end,admin.id,id),
+          env.DB.prepare("UPDATE users SET plan='PRO',storage_limit_bytes=5368709120,updated_at=? WHERE id=?").bind(start,sub.user_id),
+          env.DB.prepare("UPDATE payment_proofs SET status='approved',reviewed_by=?,reviewed_at=? WHERE user_id=? AND status='pending'").bind(admin.id,start,sub.user_id)
+        ]);
+        return reply({ok:true,ends_at:end});
+      }
+
+      if (url.pathname === "/admin/users/update" && request.method === "POST") {
+        const admin = await currentUser(request, env);
+        if (!admin || admin.role !== "admin" || admin.email.toLowerCase() !== ADMIN_EMAIL || admin.must_change_password) return reply({error:"Administrator access required."},403);
+        const body=await request.json(), id=String(body.userId||""), action=String(body.action||"");
+        if(!id || id===admin.id) return reply({error:"Invalid user."},400);
+        const target=await env.DB.prepare("SELECT id,role FROM users WHERE id=?").bind(id).first();
+        if(!target || target.role==="admin") return reply({error:"User not found or protected."},404);
+        if(action==="suspend" || action==="activate") await env.DB.prepare("UPDATE users SET status=?,updated_at=? WHERE id=?").bind(action==="suspend"?"suspended":"active",now(),id).run();
+        else if(action==="free") {
+          await env.DB.batch([
+            env.DB.prepare("UPDATE users SET plan='FREE',storage_limit_bytes=1073741824,updated_at=? WHERE id=?").bind(now(),id),
+            env.DB.prepare("UPDATE subscriptions SET status='expired' WHERE user_id=? AND status='active'").bind(id)
+          ]);
+        } else return reply({error:"Unsupported user action."},400);
+        return reply({ok:true});
       }
 
       if (url.pathname.startsWith("/public/share/") && request.method === "GET") {
