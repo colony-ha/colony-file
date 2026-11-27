@@ -8,6 +8,7 @@ ar:{back:"العودة إلى لوحة الزبون",title:"اشتراكي",free
 const lang=$("language");let current="en",payment={},selectedMethod="ccp";try{current=localStorage.getItem("colony-file-language")||"en"}catch(_){}lang.value=current;
 function apply(){current=lang.value;const d=words[current]||words.en;document.documentElement.lang=current;document.documentElement.dir=current==="ar"?"rtl":"ltr";document.querySelectorAll("[data-t]").forEach(e=>{if(d[e.dataset.t])e.textContent=d[e.dataset.t]});$("proof-form").elements.reference.placeholder=d.placeholder;try{localStorage.setItem("colony-file-language",current)}catch(_){}renderPayment()}
 lang.addEventListener("change",apply);
+const receiptInput=$("receipt-file");receiptInput.addEventListener("change",()=>{$("receipt-filename").textContent=receiptInput.files?.[0]?.name||"No file selected"});
 function renderPayment(){
  const d=words[current]||words.en,method=selectedMethod;
  const root=$("payment-instructions");root.replaceChildren();
