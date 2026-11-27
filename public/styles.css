@@ -97,3 +97,10 @@
 .payment-instructions strong{display:block;color:var(--gold-bright);margin-bottom:10px}
 .payment-instructions p{margin:0;color:#f5f1e8;font-size:14px;line-height:1.9;white-space:pre-line;overflow-wrap:anywhere}
 .settings-grid input{min-height:46px}
+
+/* Ensure subscription payment controls are visible and readable */
+.admin-panel #payment-method{display:block!important;visibility:visible!important;opacity:1!important;width:100%;min-height:58px;padding:14px 16px!important;background:#17150f!important;color:#fff!important;border:1px solid rgba(214,173,87,.8)!important;border-radius:12px!important;font-size:16px!important;font-weight:700!important;appearance:auto!important;-webkit-appearance:menulist!important}
+.admin-panel #payment-method option{background:#17150f!important;color:#fff!important;font-size:16px}
+#payment-instructions{display:block!important;visibility:visible!important;min-height:100px;padding:18px!important;background:#15120c!important;color:#fff!important;border:1px solid rgba(214,173,87,.6)!important}
+#payment-instructions strong{display:block!important;color:#f2cf7c!important;font-size:16px;margin-bottom:12px}
+#payment-instructions p{display:block!important;color:#fff!important;font-size:15px;line-height:2;white-space:pre-line;overflow-wrap:anywhere}
