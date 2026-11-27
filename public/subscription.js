@@ -10,20 +10,25 @@ function apply(){current=lang.value;const d=words[current]||words.en;document.do
 lang.addEventListener("change",apply);
 function renderPayment(){
  const d=words[current]||words.en,method=selectedMethod;
- $("payment-instructions").replaceChildren();
- const heading=document.createElement("strong");heading.textContent=d[method]||method.toUpperCase();$("payment-instructions").append(heading);
- const labels=current==="ar"?{holder:"اسم صاحب الحساب: ",bank:"اسم البنك: ",account:"رقم الحساب: ",rip:"رقم RIP: ",beneficiary:"اسم المستفيد: ",iban:"IBAN: ",swift:"SWIFT / BIC: "}:
- current==="fr"?{holder:"Titulaire du compte : ",bank:"Banque : ",account:"Numéro de compte : ",rip:"RIP : ",beneficiary:"Bénéficiaire : ",iban:"IBAN : ",swift:"SWIFT / BIC : "}:
- {holder:"Account holder: ",bank:"Bank name: ",account:"Account number: ",rip:"RIP number: ",beneficiary:"Beneficiary: ",iban:"IBAN: ",swift:"SWIFT / BIC: "};
- const lines=[];
- const add=(label,value)=>{if(value)lines.push(labels[label]+value)};
- if(method==="ccp"){add("holder",payment.ccp_holder);add("account",payment.ccp_number);if(!lines.length&&payment.ccp_details)lines.push(payment.ccp_details)}
- if(method==="cpa"){add("holder",payment.cpa_holder);add("bank",payment.cpa_bank);add("account",payment.cpa_account);add("rip",payment.cpa_rip);if(!lines.length&&payment.cpa_details)lines.push(payment.cpa_details)}
- if(method==="cepa"){add("beneficiary",payment.cepa_beneficiary);add("bank",payment.cepa_bank);add("iban",payment.cepa_iban);add("swift",payment.cepa_swift);if(!lines.length&&payment.cepa_details)lines.push(payment.cepa_details)}
- const details=document.createElement("p");details.textContent=lines.join("\n")||d.notConfigured;$("payment-instructions").append(details);
+ const root=$("payment-instructions");root.replaceChildren();
+ const heading=document.createElement("strong");heading.textContent=d[method]||method.toUpperCase();root.append(heading);
+ const labels=current==="ar"?{holder:"اسم صاحب الحساب",bank:"اسم البنك",account:"رقم الحساب",rip:"رقم RIP",beneficiary:"اسم المستفيد",iban:"IBAN",swift:"SWIFT / BIC"}:
+ current==="fr"?{holder:"Titulaire du compte",bank:"Banque",account:"Numéro de compte",rip:"RIP",beneficiary:"Bénéficiaire",iban:"IBAN",swift:"SWIFT / BIC"}:
+ {holder:"Account holder",bank:"Bank name",account:"Account number",rip:"RIP number",beneficiary:"Beneficiary",iban:"IBAN",swift:"SWIFT / BIC"};
+ const fields=method==="ccp"?[["holder",payment.ccp_holder],["account",payment.ccp_number]]:
+ method==="cpa"?[["holder",payment.cpa_holder],["bank",payment.cpa_bank],["account",payment.cpa_account],["rip",payment.cpa_rip]]:
+ [["beneficiary",payment.cepa_beneficiary],["bank",payment.cepa_bank],["iban",payment.cepa_iban],["swift",payment.cepa_swift]];
+ const available=fields.filter(([,value])=>String(value||"").trim());
+ if(!available.length){
+   const legacy=method==="ccp"?payment.ccp_details:method==="cpa"?payment.cpa_details:payment.cepa_details;
+   if(legacy){const line=document.createElement("p");line.className="payment-detail-line";line.textContent=legacy;root.append(line);}
+   else{const empty=document.createElement("p");empty.textContent=d.notConfigured;root.append(empty);}
+   return;
+ }
+ for(const [key,value] of available){const line=document.createElement("p");line.className="payment-detail-line";const label=document.createElement("b");label.textContent=labels[key]+": ";line.append(label,document.createTextNode(String(value)));root.append(line);}
 }
 document.querySelectorAll(".payment-method-tab").forEach(button=>button.addEventListener("click",()=>{selectedMethod=button.dataset.method;document.querySelectorAll(".payment-method-tab").forEach(tab=>{const active=tab===button;tab.classList.toggle("active",active);tab.setAttribute("aria-pressed",String(active))});renderPayment()}));
-async function load(){try{const r=await fetch(API+"/subscription",{credentials:"include"}),d=await r.json();if(!r.ok)throw Error(d.error||words[current].needLogin);payment=d.payment||{};$("current-plan").textContent=(d.plan==="PRO"?words[current].proPlan:words[current].freePlan)+(d.subscription?.ends_at?" · "+new Date(d.subscription.ends_at).toLocaleDateString():"");$("amount-dzd").textContent=Number(d.pro_price_dzd||1300).toLocaleString()+" DZD";$("amount-usd").textContent="$"+Number(d.pro_price_usd||5).toFixed(2)+" USD";const h=$("subscription-history");h.replaceChildren();if(d.subscription){const p=document.createElement("p");p.textContent=(d.subscription.plan||"PRO")+" · "+(words[current][d.subscription.status]||d.subscription.status)+(d.subscription.created_at?" · "+new Date(d.subscription.created_at).toLocaleDateString():"");h.append(p)}else h.textContent="—";if(d.plan==="PRO"){$("submit-proof").disabled=true;$("submit-proof").textContent=words[current].active}renderPayment()}catch(e){$("current-plan").textContent=e.message;$("payment-instructions").textContent=e.message;$("subscription-message").textContent=e.message}}
+async function load(){try{const r=await fetch(API+"/subscription",{credentials:"include"}),d=await r.json();if(!r.ok)throw Error(d.error||words[current].needLogin);payment=(d.payment&&typeof d.payment==="object")?d.payment:{};$("current-plan").textContent=(d.plan==="PRO"?words[current].proPlan:words[current].freePlan)+(d.subscription?.ends_at?" · "+new Date(d.subscription.ends_at).toLocaleDateString():"");$("amount-dzd").textContent=Number(d.pro_price_dzd||1300).toLocaleString()+" DZD";$("amount-usd").textContent="$"+Number(d.pro_price_usd||5).toFixed(2)+" USD";const h=$("subscription-history");h.replaceChildren();if(d.subscription){const p=document.createElement("p");p.textContent=(d.subscription.plan||"PRO")+" · "+(words[current][d.subscription.status]||d.subscription.status)+(d.subscription.created_at?" · "+new Date(d.subscription.created_at).toLocaleDateString():"");h.append(p)}else h.textContent="—";if(d.plan==="PRO"){$("submit-proof").disabled=true;$("submit-proof").textContent=words[current].active}renderPayment()}catch(e){$("current-plan").textContent=e.message;$("payment-instructions").textContent=e.message;$("subscription-message").textContent=e.message}}
 $("proof-form").addEventListener("submit",async e=>{e.preventDefault();const b=$("submit-proof"),f=e.currentTarget;b.disabled=true;const data=new FormData(f);data.set("method",selectedMethod);try{const r=await fetch(API+"/subscription/request",{method:"POST",credentials:"include",body:data}),d=await r.json();if(!r.ok)throw Error(d.error||"Request failed");$("subscription-message").textContent=words[current].sent;f.reset();await load()}catch(err){$("subscription-message").textContent=err.message;b.disabled=false}});
 apply();load();
 })();
