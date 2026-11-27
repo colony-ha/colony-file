@@ -70,13 +70,15 @@ async function ensurePaymentSettings(env) {
   )`).run();
   await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('usd_dzd_rate','260')").run();
   await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('ccp_details','')").run();
+  await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('ccp_holder','')").run();
+  await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('ccp_number','')").run();
   await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('cpa_details','')").run();
   await env.DB.prepare("INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('cepa_details','')").run();
 }
 async function paymentSettings(env) {
   const rows=await env.DB.prepare("SELECT setting_key,setting_value FROM app_settings").all();
   const values=Object.fromEntries((rows.results||[]).map(x=>[x.setting_key,x.setting_value]));
-  return {usd_dzd_rate:Number(values.usd_dzd_rate||260),ccp_details:values.ccp_details||"",cpa_details:values.cpa_details||"",cepa_details:values.cepa_details||""};
+  return {usd_dzd_rate:Number(values.usd_dzd_rate||260),ccp_details:values.ccp_details||"",ccp_holder:values.ccp_holder||"",ccp_number:values.ccp_number||"",cpa_details:values.cpa_details||"",cepa_details:values.cepa_details||""};
 }
 async function ensureResetTable(env) {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS password_reset_requests (
@@ -340,7 +342,7 @@ export default {
         const body=await request.json();
         const rate=Number(body.usd_dzd_rate);
         if(!Number.isFinite(rate)||rate<1||rate>100000)return reply({error:"Enter a valid USD to DZD exchange rate."},400);
-        const entries=[["usd_dzd_rate",String(rate)],["ccp_details",String(body.ccp_details||"").trim().slice(0,2000)],["cpa_details",String(body.cpa_details||"").trim().slice(0,2000)],["cepa_details",String(body.cepa_details||"").trim().slice(0,2000)]];
+        const entries=[["usd_dzd_rate",String(rate)],["ccp_holder",String(body.ccp_holder||"").trim().slice(0,160)],["ccp_number",String(body.ccp_number||"").trim().slice(0,40)],["cpa_details",String(body.cpa_details||"").trim().slice(0,2000)],["cepa_details",String(body.cepa_details||"").trim().slice(0,2000)]];
         await env.DB.batch(entries.map(([k,v])=>env.DB.prepare("INSERT INTO app_settings (setting_key,setting_value,updated_at) VALUES (?,?,?) ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_at=excluded.updated_at").bind(k,v,now())));
         return reply({ok:true,settings:await paymentSettings(env)});
       }
