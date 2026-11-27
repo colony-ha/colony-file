@@ -1,7 +1,68 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090909"><title>Subscription — COLONY FILE</title><link rel="stylesheet" href="/styles.css?v=payment-tabs-7"><script src="/subscription.js?v=payment-tabs-7" defer></script></head>
-<body><div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
-<header class="topbar"><a class="brand" href="/"><img src="/colony-logo.png" class="brand-mark" alt=""><span>COLONY <b>FILE</b></span></a><div class="top-actions"><select id="language" class="language"><option value="en">EN</option><option value="fr">FR</option><option value="ar">العربية</option></select><a class="button button-outline" href="/dashboard.html" data-t="back">Back to dashboard</a></div></header>
-<main class="dashboard-main"><section class="admin-area" style="display:block"><div class="eyebrow">COLONY FILE · PLANS</div><h1 data-t="title">Your subscription</h1><div class="plan-grid"><article class="plan-card"><div class="plan-name">FREE</div><div class="plan-price">$0</div><div class="plan-storage">1 GB</div><p data-t="free">Your current free storage plan.</p></article><article class="plan-card plan-pro"><div class="plan-name">PRO</div><div class="plan-price">$5<span>/ month</span></div><div class="plan-storage">5 GB</div><p data-t="pro">Five gigabytes of cloud storage for 30 days.</p></article></div>
-<div class="admin-panel"><h2 data-t="current">Current plan</h2><p id="current-plan">Loading…</p><h2 data-t="upgrade">Request PRO subscription</h2><p data-t="instructions">Choose a payment method, transfer the displayed amount, then upload your receipt. PRO is activated only after administrator approval.</p><div class="payment-total"><strong data-t="amount">Amount to pay</strong><span id="amount-dzd">1,300 DZD</span><small id="amount-usd">$5 USD</small></div><div class="payment-method-area"><label data-t="method">Payment method</label><div class="payment-method-tabs" role="group" aria-label="Payment method"><button type="button" class="payment-method-tab active" data-method="ccp" aria-pressed="true">CCP</button><button type="button" class="payment-method-tab" data-method="cpa" aria-pressed="false">CPA</button><button type="button" class="payment-method-tab" data-method="cepa" aria-pressed="false">CEPA Transfer</button></div></div><div id="payment-instructions" class="payment-instructions"><strong>CCP payment details</strong><p>Loading payment details…</p></div><form id="proof-form" enctype="multipart/form-data"><label data-t="reference">Transaction reference (optional)<input name="reference" maxlength="160" placeholder="Transaction ID or details"></label><label class="receipt-upload" data-t="receipt">Upload payment receipt (image or PDF)<input id="receipt-file" name="receipt" type="file" accept="image/*,.pdf" required><span class="receipt-picker" role="button" aria-label="Choose receipt file">📎 Choose image or PDF</span><small id="receipt-filename">No file selected</small></label><button class="button button-gold" type="submit" id="submit-proof" data-t="submit">Send receipt to administrator</button></form><p id="subscription-message" class="auth-message" role="status"></p><h2 data-t="history">Request status</h2><div id="subscription-history"></div></div></section></main>
-<footer><a class="brand footer-brand" href="/"><img src="/colony-logo.png" class="brand-mark" alt=""><span>COLONY <b>FILE</b></span></a><span>© 2026 COLONY FILE</span></footer></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090909"><title>Subscription — COLONY FILE</title>
+<link rel="stylesheet" href="/styles.css?v=subscription-rebuild-1">
+<script src="/subscription.js?v=subscription-rebuild-1" defer></script>
+<style>
+.subscription-page{max-width:900px;margin:0 auto;padding:28px 22px 70px}
+.subscription-page h1{font-size:clamp(34px,5vw,48px);letter-spacing:-1.5px;margin:12px 0 24px}
+.subscription-panel{margin-top:24px;padding:clamp(18px,4vw,30px);border:1px solid rgba(214,173,87,.28);border-radius:18px;background:linear-gradient(145deg,#15140f,#0d0d0c);box-shadow:0 18px 55px #0005}
+.subscription-panel h2{font-size:21px;letter-spacing:-.5px;margin:0 0 12px}
+.subscription-muted{color:#aaa397;font-size:13px;line-height:1.8}
+.plan-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:0}
+.payment-total{margin:20px 0}
+.payment-method-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+.payment-instructions{min-height:120px;margin:14px 0 22px}
+.payment-detail-line{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.payment-detail-line:last-child{border-bottom:0}
+.payment-detail-line b{color:#e8c77e}
+#proof-form{display:grid;gap:15px;margin-top:20px}
+#proof-form label{display:grid;gap:9px;color:#e6dfd1;font-size:13px;font-weight:600}
+#proof-form input[type=text]{width:100%;min-height:48px;padding:12px 14px;background:#090909;color:#fff;border:1px solid rgba(214,173,87,.35);border-radius:10px;font:inherit}
+#proof-form input[type=file]{display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:54px!important;padding:9px!important;background:#090909!important;color:#fff!important;border:1px solid rgba(214,173,87,.55)!important;border-radius:10px!important;font:inherit!important;cursor:pointer}
+#proof-form input[type=file]::file-selector-button{margin-inline-end:12px;padding:10px 15px;border:0;border-radius:8px;background:linear-gradient(135deg,#f0d28e,#bd9344);color:#17120a;font-weight:800;cursor:pointer}
+#receipt-filename{display:block;color:#e4c77f;font-size:12px;overflow-wrap:anywhere}
+#submit-proof{width:100%;min-height:52px;margin-top:4px;border:0;cursor:pointer}
+#submit-proof:disabled{opacity:.55;cursor:not-allowed}
+.subscription-status{min-height:22px;color:#f0cf83;font-size:13px;line-height:1.7}
+#subscription-history{color:#ddd1b4;font-size:13px}
+@media(max-width:600px){.subscription-page{padding:20px 15px 50px}.subscription-page .topbar{padding:0 15px}.plan-grid{grid-template-columns:1fr}.payment-method-tabs{gap:7px}.payment-method-tab{font-size:12px;padding:9px 4px}.subscription-panel{padding:18px 15px}}
+</style>
+</head>
+<body>
+<div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+<header class="topbar">
+<a class="brand" href="/"><img src="/colony-logo.png" class="brand-mark" alt=""><span>COLONY <b>FILE</b></span></a>
+<div class="top-actions"><select id="language" class="language" aria-label="Language"><option value="en">EN</option><option value="fr">FR</option><option value="ar">العربية</option></select><a class="button button-outline" href="/dashboard.html" data-t="back">Back to dashboard</a></div>
+</header>
+<main class="dashboard-main">
+<section class="subscription-page">
+<div class="eyebrow">COLONY FILE · MEMBERSHIP</div><h1 data-t="title">Your subscription</h1>
+<div class="plan-grid">
+<article class="plan-card"><div class="plan-name">FREE</div><div class="plan-price">$0</div><div class="plan-storage">1 GB</div><p data-t="free">Your current free storage plan.</p></article>
+<article class="plan-card plan-pro"><div class="plan-name">PRO</div><div class="plan-price">$5<span>/ 30 days</span></div><div class="plan-storage">5 GB</div><p data-t="pro">Five gigabytes of cloud storage for 30 days.</p></article>
+</div>
+<section class="subscription-panel">
+<h2 data-t="current">Current plan</h2><p id="current-plan" class="subscription-muted">Checking your account…</p>
+<div class="payment-total"><strong data-t="amount">Amount to pay</strong><span id="amount-dzd">— DZD</span><small id="amount-usd">$5 USD</small></div>
+<h2 data-t="upgrade">Subscribe to PRO</h2><p class="subscription-muted" data-t="instructions">Choose a payment method, transfer the displayed amount, then upload your receipt. PRO is activated only after administrator approval.</p>
+<div class="payment-method-area"><label data-t="method">Payment method</label><div class="payment-method-tabs" role="group" aria-label="Payment method">
+<button type="button" class="payment-method-tab active" data-method="ccp" aria-pressed="true">CCP</button>
+<button type="button" class="payment-method-tab" data-method="cpa" aria-pressed="false">CPA</button>
+<button type="button" class="payment-method-tab" data-method="cepa" aria-pressed="false">CEPA Transfer</button>
+</div></div>
+<div id="payment-instructions" class="payment-instructions" aria-live="polite"><strong>CCP payment details</strong><p>Loading payment information…</p></div>
+<form id="proof-form" enctype="multipart/form-data">
+<label><span data-t="reference">Transaction reference (optional)</span><input name="reference" type="text" maxlength="160" placeholder="Transaction ID or details"></label>
+<label><span data-t="receipt">Select your payment receipt (image or PDF)</span><input id="receipt-file" name="receipt" type="file" accept="image/*,.pdf,application/pdf" required><small id="receipt-filename">No file selected</small></label>
+<button class="button button-gold" type="submit" id="submit-proof" data-t="submit">Send receipt to administrator</button>
+</form>
+<p id="subscription-message" class="subscription-status" role="status" aria-live="polite"></p>
+<h2 data-t="history" style="margin-top:28px">Request status</h2><div id="subscription-history">—</div>
+</section>
+</section>
+</main>
+<footer><a class="brand footer-brand" href="/"><img src="/colony-logo.png" class="brand-mark" alt=""><span>COLONY <b>FILE</b></span></a><span>© 2026 COLONY FILE</span></footer>
+</body></html>
