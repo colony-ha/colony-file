@@ -28,7 +28,29 @@ function renderPayment(){
  for(const [key,value] of available){const line=document.createElement("p");line.className="payment-detail-line";const label=document.createElement("b");label.textContent=labels[key]+": ";line.append(label,document.createTextNode(String(value)));root.append(line);}
 }
 document.querySelectorAll(".payment-method-tab").forEach(button=>button.addEventListener("click",()=>{selectedMethod=button.dataset.method;document.querySelectorAll(".payment-method-tab").forEach(tab=>{const active=tab===button;tab.classList.toggle("active",active);tab.setAttribute("aria-pressed",String(active))});renderPayment()}));
-async function load(){try{const r=await fetch(API+"/subscription",{credentials:"include"}),d=await r.json();if(!r.ok)throw Error(d.error||words[current].needLogin);payment=(d.payment&&typeof d.payment==="object")?d.payment:{};$("current-plan").textContent=(d.plan==="PRO"?words[current].proPlan:words[current].freePlan)+(d.subscription?.ends_at?" · "+new Date(d.subscription.ends_at).toLocaleDateString():"");$("amount-dzd").textContent=Number(d.pro_price_dzd||1300).toLocaleString()+" DZD";$("amount-usd").textContent="$"+Number(d.pro_price_usd||5).toFixed(2)+" USD";const h=$("subscription-history");h.replaceChildren();if(d.subscription){const p=document.createElement("p");p.textContent=(d.subscription.plan||"PRO")+" · "+(words[current][d.subscription.status]||d.subscription.status)+(d.subscription.created_at?" · "+new Date(d.subscription.created_at).toLocaleDateString():"");h.append(p)}else h.textContent="—";if(d.plan==="PRO"){$("submit-proof").disabled=true;$("submit-proof").textContent=words[current].active}renderPayment()}catch(e){$("current-plan").textContent=e.message;$("payment-instructions").textContent=e.message;$("subscription-message").textContent=e.message}}
+async function load(){
+ const h=$("subscription-history");
+ try{
+   const pr=await fetch(API+"/payment-settings",{cache:"no-store"});
+   const pd=await pr.json();
+   if(!pr.ok)throw Error(pd.error||"Could not load payment details.");
+   payment=(pd.settings&&typeof pd.settings==="object")?pd.settings:{};
+   renderPayment();
+ }catch(e){
+   payment={};renderPayment();
+   $("payment-instructions").append(document.createTextNode(" · "+e.message));
+ }
+ try{
+   const r=await fetch(API+"/subscription",{credentials:"include",cache:"no-store"}),d=await r.json();
+   if(!r.ok)throw Error(d.error||words[current].needLogin);
+   $("current-plan").textContent=(d.plan==="PRO"?words[current].proPlan:words[current].freePlan)+(d.subscription?.ends_at?" · "+new Date(d.subscription.ends_at).toLocaleDateString():"");
+   $("amount-dzd").textContent=Number(d.pro_price_dzd||1300).toLocaleString()+" DZD";
+   $("amount-usd").textContent="$"+Number(d.pro_price_usd||5).toFixed(2)+" USD";
+   h.replaceChildren();
+   if(d.subscription){const p=document.createElement("p");p.textContent=(d.subscription.plan||"PRO")+" · "+(words[current][d.subscription.status]||d.subscription.status)+(d.subscription.created_at?" · "+new Date(d.subscription.created_at).toLocaleDateString():"");h.append(p)}else h.textContent="—";
+   if(d.plan==="PRO"){$("submit-proof").disabled=true;$("submit-proof").textContent=words[current].active}
+ }catch(e){$("current-plan").textContent=e.message;$("subscription-message").textContent=e.message}
+}
 $("proof-form").addEventListener("submit",async e=>{e.preventDefault();const b=$("submit-proof"),f=e.currentTarget;b.disabled=true;const data=new FormData(f);data.set("method",selectedMethod);try{const r=await fetch(API+"/subscription/request",{method:"POST",credentials:"include",body:data}),d=await r.json();if(!r.ok)throw Error(d.error||"Request failed");$("subscription-message").textContent=words[current].sent;f.reset();await load()}catch(err){$("subscription-message").textContent=err.message;b.disabled=false}});
 apply();load();
 })();
