@@ -10,7 +10,7 @@
   applyLanguage(saved);
   const subscribeButton=document.getElementById("subscribe-pro");
   if(subscribeButton) subscribeButton.addEventListener("click",()=>{window.location.assign("/subscription.html")});
-  fetch("https://colony-file-api.colonyus666.workers.dev/auth/me",{credentials:"include"}).then(r=>r.json()).then(d=>{if(d.user?.role==="admin")window.location.assign("/admin.html")}).catch(()=>{});
+  fetch("https://colony-file-api.colonyus666.workers.dev/auth/me",{credentials:"include"}).then(r=>r.json()).then(d=>{if(!d.user)window.location.assign("/");else if(d.user.role==="admin")window.location.assign("/admin.html")}).catch(()=>window.location.assign("/"));
   language.addEventListener("change",()=>applyLanguage(language.value));
   const script=document.createElement("script");script.src="/workspace.js";document.head.append(script);
 })();
