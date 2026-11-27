@@ -425,7 +425,7 @@ export default {
         const parts=url.pathname.split("/");
         const token=parts[3]||"";
         const isDownload=parts[4]==="download";
-        if (!/^[a-f0-9]{48,80}$/.test(token)) return reply({error:"Invalid or unavailable share link."},404);
+        if (!/^[a-f0-9]{24,80}$/.test(token)) return reply({error:"Invalid or unavailable share link."},404);
         const link=await env.DB.prepare("SELECT f.id,f.object_key,f.original_name,f.mime_type,f.size_bytes FROM share_links s JOIN files f ON f.id=s.file_id WHERE s.token_hash=? AND s.is_active=1 AND (s.expires_at IS NULL OR s.expires_at>?) AND f.status='active'").bind(await digest(token),now()).first();
         if(!link) return reply({error:"This share link is unavailable or has expired."},404);
         if(!isDownload) return reply({ok:true,file:{name:link.original_name,size_bytes:link.size_bytes,mime_type:link.mime_type}});
@@ -441,7 +441,7 @@ export default {
         const id=url.pathname.split("/")[2];
         const file=await env.DB.prepare("SELECT id FROM files WHERE id=? AND user_id=? AND status='active'").bind(id,user.id).first();
         if(!file) return reply({error:"File not found."},404);
-        const token=random(24);
+        const token=random(12);
         await env.DB.prepare("INSERT INTO share_links (id,token_hash,owner_user_id,file_id) VALUES (?,?,?,?)").bind(crypto.randomUUID(),await digest(token),user.id,id).run();
         return reply({ok:true,url:SITE_ORIGIN+"/share.html?token="+token});
       }
