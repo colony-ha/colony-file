@@ -118,6 +118,11 @@ export default {
         return reply({ service: "COLONY FILE API", status: "running", database: row?.ok === 1 ? "connected" : "unknown", storage: env.FILES ? "bound" : "not_bound" });
       }
 
+      // Public bank details are intentionally available to customers before receipt submission.
+      if (url.pathname === "/payment-settings" && request.method === "GET") {
+        return reply({ settings: await paymentSettings(env) });
+      }
+
       if (url.pathname === "/admin/bootstrap" && request.method === "POST") {
         if (!env.ADMIN_BOOTSTRAP_KEY) return reply({ error: "Admin setup is not configured." }, 503);
         const body = await request.json();
