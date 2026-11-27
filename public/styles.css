@@ -39,3 +39,21 @@
 .dashboard-main{min-height:calc(100vh - 170px);padding-top:38px}.dashboard-main .workspace-area{margin-bottom:55px}.dashboard-main .workspace-head{padding:8px 0 14px}.dashboard-main .workspace-head h2{font-size:34px}@media(max-width:600px){.dashboard-main{padding-top:20px}.dashboard-main .workspace-head h2{font-size:26px}}
 
 .subscription-promo{margin:0 0 18px}.subscription-promo .storage-top{flex-wrap:wrap}.subscription-promo .storage-top div{gap:8px}.subscription-promo .storage-top strong{font-size:17px}.subscription-promo .storage-top small{color:#aaa397;font-size:12px}.share-main{min-height:calc(100vh - 180px);display:grid;place-items:center;padding:35px 20px}.share-card{width:min(100%,560px);padding:38px;border:1px solid rgba(214,173,87,.35);border-radius:18px;background:linear-gradient(145deg,#171611,#0d0d0c);text-align:center;box-shadow:0 20px 70px #000}.share-icon{font-size:48px;color:var(--gold-bright);margin:25px 0 8px}.share-card h1{font-size:27px;overflow-wrap:anywhere}.share-card p{color:#aaa397;font-size:13px;line-height:1.7}.share-card .button{margin-top:14px}.share-error{color:#e4b86b!important}@media(max-width:600px){.share-card{padding:28px 20px}.share-card h1{font-size:22px}}
+
+
+/* Payment settings and subscription checkout */
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
+.settings-grid label,.admin-panel label{display:flex;flex-direction:column;gap:8px;color:var(--muted,#c5c0b4);font-size:.92rem}
+.settings-grid input,.settings-grid textarea,.admin-panel input,.admin-panel textarea,.admin-panel select,.payment-method-select{width:100%;box-sizing:border-box;background:#111;color:#f7f3e8;border:1px solid rgba(212,175,55,.28);border-radius:12px;padding:12px;font:inherit}
+.settings-grid textarea{resize:vertical}
+.payment-total{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 20px;margin:18px 0;background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.32);border-radius:16px}
+.payment-total span{font-size:1.5rem;font-weight:800;color:#e8c65a}
+.payment-total small{color:var(--muted,#c5c0b4)}
+.payment-instructions{padding:16px;margin:12px 0 20px;background:#101010;border:1px solid rgba(212,175,55,.22);border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.payment-instructions p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+#proof-form{display:grid;gap:14px}
+#proof-form label{display:grid;gap:8px}
+#proof-form input{max-width:100%;box-sizing:border-box;background:#111;color:#f7f3e8;border:1px solid rgba(212,175,55,.28);border-radius:12px;padding:12px}
+.admin-request a{display:inline-block;color:#e8c65a;margin:8px 0;text-decoration:underline}
+.admin-request{overflow-wrap:anywhere}
+@media(max-width:680px){.settings-grid{grid-template-columns:1fr}.payment-total{align-items:flex-start;flex-direction:column}}
