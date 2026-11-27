@@ -89,3 +89,14 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at);
+
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  setting_key TEXT PRIMARY KEY,
+  setting_value TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('usd_dzd_rate','260');
+INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('ccp_details','');
+INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('cpa_details','');
+INSERT OR IGNORE INTO app_settings (setting_key,setting_value) VALUES ('cepa_details','');
