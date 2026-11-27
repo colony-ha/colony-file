@@ -56,10 +56,11 @@
         const name=document.createElement("strong");name.textContent=f.original_name;
         const meta=document.createElement("small");meta.textContent=bytes(f.size_bytes);
         info.append(name,meta);
-        const dl=document.createElement("button");dl.textContent="↓";dl.title=t("download");dl.onclick=()=>download(f);
-        const share=document.createElement("button");share.textContent="↗";share.title=t("share");share.onclick=()=>createShare(f);
-        const del=document.createElement("button");del.textContent="×";del.title=t("delete");del.onclick=()=>remove(f);
-        card.append(ic,info,dl,share,del);grid.append(card);
+        const actions=document.createElement("div");actions.className="file-actions";
+        const dl=document.createElement("button");dl.type="button";dl.className="file-action";dl.textContent=t("download");dl.title=t("download");dl.onclick=()=>download(f);
+        const share=document.createElement("button");share.type="button";share.className="file-action file-action-share";share.textContent=t("share");share.title=t("share");share.onclick=()=>createShare(f);
+        const del=document.createElement("button");del.type="button";del.className="file-action file-action-delete";del.textContent=t("delete");del.title=t("delete");del.onclick=()=>remove(f);
+        actions.append(dl,share,del);card.append(ic,info,actions);grid.append(card);
       });
       $("workspace-message").textContent="";
     } catch(e){$("workspace-message").textContent=e.message;}
@@ -67,8 +68,9 @@
   async function createShare(f) {
     try {
       const d=await request("/files/"+encodeURIComponent(f.id)+"/share",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
-      await navigator.clipboard.writeText(d.url);
-      $("workspace-message").textContent=(lang()==="ar"?"تم إنشاء رابط المشاركة ونسخه: ":lang()==="fr"?"Lien de partage créé et copié : ":"Share link created and copied: ")+d.url;
+      let copied=false;
+      try { await navigator.clipboard.writeText(d.url); copied=true; } catch(_) {}
+      $("workspace-message").textContent=(lang()==="ar"?(copied?"تم إنشاء الرابط ونسخه: ":"رابط المشاركة: "):lang()==="fr"?(copied?"Lien créé et copié : ":"Lien de partage : "):(copied?"Share link created and copied: ":"Share link: "))+d.url;
     } catch(e) {$("workspace-message").textContent=e.message+" — "+(lang()==="ar"?"انسخ الرابط يدوياً إذا لزم الأمر.":"");}
   }
   async function download(f) {
